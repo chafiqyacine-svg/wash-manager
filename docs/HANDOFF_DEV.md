@@ -81,6 +81,9 @@ table `tickets` via un connecteur — le reste ne change pas.
   TODO(dev) : filtrer les données par `site_id` de l'utilisateur sur chaque endpoint.
 - **Page Employés + classement** : `GET /employes/performance` (véhicules, temps
   moyen, conformité, revenus, score, trié) + écran Employés.
+- **Employés rattachés à un site** : `site_id` sur l'employé ; liste, classement
+  et effectif filtrables par site ; affectation modifiable depuis l'écran Employés
+  (`POST /employes`, `PATCH /employes/{id}`).
 - **Mode test vidéo (IA)** : `Detector` (ultralytics) et `CameraStream` (RTSP ou
   fichier) fonctionnels + `ai/detect_video.py` — teste la détection de véhicules
   sur une vidéo avec YOLO pré-entraîné, sans caméras installées.

@@ -41,7 +41,9 @@ def generer(nb_jours: int = 7, par_jour: int = 25) -> None:
         if not forfaits:
             raise SystemExit("Lancez d'abord `python -m app.db.seed` (forfaits manquants).")
 
-        employes = _assurer_employes(db)
+        from app.models import Site
+        sites = db.scalars(select(Site)).all()
+        employes = _assurer_employes(db, sites)
         bays = db.scalars(select(Bay)).all()  # peut être vide si seed sans sites
 
         for d in range(nb_jours):
@@ -60,11 +62,16 @@ def generer(nb_jours: int = 7, par_jour: int = 25) -> None:
         db.close()
 
 
-def _assurer_employes(db) -> list[Employe]:
+def _assurer_employes(db, sites: list) -> list[Employe]:
     existants = db.scalars(select(Employe)).all()
     if existants:
         return existants
-    emps = [Employe(nom=n, badge_nfc_id=f"NFC{1000+i}") for i, n in enumerate(EMPLOYES)]
+    # Répartit les employés entre les sites disponibles.
+    emps = []
+    for i, n in enumerate(EMPLOYES):
+        site = sites[i % len(sites)] if sites else None
+        emps.append(Employe(nom=n, badge_nfc_id=f"NFC{1000+i}",
+                            site_id=site.id if site else None))
     db.add_all(emps)
     db.flush()
     return emps

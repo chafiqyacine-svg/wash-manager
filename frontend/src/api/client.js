@@ -66,8 +66,9 @@ export const api = {
   transactions: (params = "") => request(`/transactions${params}`),
   anomalies: (params = "") => request(`/anomalies${params}`),
   resoudreAnomalie: (id) => request(`/anomalies/${id}/resoudre`, { method: "POST" }),
-  employes: () => request("/employes"),
-  metriquesEmploye: (id) => request(`/employes/${id}/metriques`),
+  employes: (siteId) => request(`/employes${siteId ? `?site_id=${siteId}` : ""}`),
+  creerEmploye: (payload) => request("/employes", { method: "POST", body: payload }),
+  modifierEmploye: (id, payload) => request(`/employes/${id}`, { method: "PATCH", body: payload }),
   employePerformance: (jours = 7, siteId) =>
     request(`/employes/performance?jours=${jours}${siteId ? `&site_id=${siteId}` : ""}`),
   // Profil & utilisateurs (admin)

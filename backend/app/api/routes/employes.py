@@ -1,14 +1,14 @@
 """Gestion des employés et de leurs métriques de performance (cf. section 8)."""
 from datetime import date, datetime, time, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Bay, Employe, Forfait, Transaction
-from app.schemas.common import EmployeOut
+from app.models import Employe, Forfait, Transaction
+from app.schemas.common import EmployeCreate, EmployeOut, EmployeUpdate
 from app.services.rapport import _perf_employes
 
 router = APIRouter(prefix="/employes", tags=["employes"],
@@ -16,8 +16,32 @@ router = APIRouter(prefix="/employes", tags=["employes"],
 
 
 @router.get("", response_model=list[EmployeOut])
-def lister_employes(db: Session = Depends(get_db)):
-    return db.scalars(select(Employe)).all()
+def lister_employes(db: Session = Depends(get_db), site_id: int | None = None):
+    stmt = select(Employe)
+    if site_id:
+        stmt = stmt.where(Employe.site_id == site_id)
+    return db.scalars(stmt).all()
+
+
+@router.post("", response_model=EmployeOut, status_code=status.HTTP_201_CREATED)
+def creer_employe(payload: EmployeCreate, db: Session = Depends(get_db)) -> Employe:
+    employe = Employe(**payload.model_dump())
+    db.add(employe)
+    db.commit()
+    db.refresh(employe)
+    return employe
+
+
+@router.patch("/{employe_id}", response_model=EmployeOut)
+def modifier_employe(employe_id: int, payload: EmployeUpdate, db: Session = Depends(get_db)) -> Employe:
+    employe = db.get(Employe, employe_id)
+    if employe is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Employé inconnu")
+    for champ, valeur in payload.model_dump(exclude_none=True).items():
+        setattr(employe, champ, valeur)
+    db.commit()
+    db.refresh(employe)
+    return employe
 
 
 @router.get("/performance")
@@ -30,18 +54,22 @@ def performance(
     conformité, revenus, score qualité), trié par score décroissant."""
     debut = datetime.combine(date.today() - timedelta(days=jours - 1), time.min)
 
+    # Employés concernés (affectés au site si filtré).
+    emp_stmt = select(Employe)
+    if site_id:
+        emp_stmt = emp_stmt.where(Employe.site_id == site_id)
+    employes = db.scalars(emp_stmt).all()
+    emp_ids = [e.id for e in employes]
+
     stmt = select(Transaction).where(
         Transaction.statut == "cloturee",
         Transaction.heure_sortie >= debut,
-        Transaction.employe_id.is_not(None),
+        Transaction.employe_id.in_(emp_ids) if emp_ids else Transaction.employe_id.is_(None),
     )
-    if site_id:
-        bay_ids = list(db.scalars(select(Bay.id).where(Bay.site_id == site_id)).all())
-        stmt = stmt.where(Transaction.bay_id.in_(bay_ids))
     txns = db.scalars(stmt).all()
 
     prix = {f.id: float(f.prix) for f in db.scalars(select(Forfait)).all()}
-    noms = {e.id: e.nom for e in db.scalars(select(Employe)).all()}
+    noms = {e.id: e.nom for e in employes}
     return _perf_employes(txns, prix, noms)
 
 

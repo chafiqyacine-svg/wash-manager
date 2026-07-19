@@ -17,9 +17,11 @@ CREATE TABLE employes (
     nom           VARCHAR(128) NOT NULL,
     badge_nfc_id  VARCHAR(64) UNIQUE,
     date_embauche DATE,
+    site_id       INTEGER REFERENCES sites(id),  -- affectation (NULL = polyvalent)
     actif         BOOLEAN DEFAULT TRUE,
     created_at    TIMESTAMPTZ DEFAULT now()
 );
+CREATE INDEX idx_employes_site ON employes(site_id);
 
 CREATE TABLE forfaits (
     id             SERIAL PRIMARY KEY,

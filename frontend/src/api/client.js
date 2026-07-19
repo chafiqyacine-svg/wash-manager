@@ -51,6 +51,7 @@ export const api = {
   employes: () => request("/employes"),
   metriquesEmploye: (id) => request(`/employes/${id}/metriques`),
   forfaits: () => request("/forfaits"),
+  modifierForfait: (id, payload) => request(`/forfaits/${id}`, { method: "PUT", body: payload }),
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),

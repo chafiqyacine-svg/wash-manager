@@ -28,7 +28,9 @@ table `tickets` via un connecteur — le reste ne change pas.
 ## Priorité 2 — logique serveur (`backend/`)
 - [ ] `services/ingestion.py` — résolution employé via badge NFC (`_on_badge`).
 - [ ] `services/ingestion.py` — idempotence des événements (rejeux réseau).
-- [ ] `services/rapport.py` — requêtes d'agrégation + génération PDF (ReportLab).
+- [ ] `services/rapport.py` — reste à ajouter le **graphique horaire** dans le PDF
+      et les **comparaisons** (vs veille / semaine précédente / moyenne mensuelle).
+      (Agrégations + tableau PDF déjà implémentés et testés.)
 - [ ] `services/notification.py` — appel réel WhatsApp Business API.
 - [ ] `api/routes/live.py` — auth WebSocket + diffusion des mises à jour temps réel.
 - [ ] Migrations **Alembic** (remplacer `create_all` de `db/seed.py`).
@@ -53,6 +55,10 @@ table `tickets` via un connecteur — le reste ne change pas.
   (associer un ticket ouvert à une transaction non appariée + recalcul anomalies).
 - **Paramètres configurables** (`parametres`) : fenêtre de rapprochement réglable
   depuis l'écran Configuration.
+- **Édition des forfaits** (`PUT /forfaits/{id}`) : prix, zones requises, seuils de
+  temps modifiables depuis l'écran Configuration.
+- **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
+  génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **Géométrie zones/lignes** (franchissement, point-dans-polygone) — `ai/pipeline/zones.py`.
 - Contrat d'événements IA ↔ backend.
 - Squelette d'API (auth JWT, events, dashboard, transactions, anomalies,

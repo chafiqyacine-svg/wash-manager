@@ -36,6 +36,14 @@ class ForfaitOut(ORMModel, ForfaitBase):
     id: int
 
 
+class ForfaitUpdate(BaseModel):
+    """Mise à jour partielle d'un forfait depuis l'écran Configuration."""
+    prix: float | None = None
+    zones_requises: list[str] | None = None
+    temps_min: int | None = None
+    temps_max: int | None = None
+
+
 # ─── Employés ────────────────────────────────────────────────────────────────
 class EmployeBase(BaseModel):
     nom: str

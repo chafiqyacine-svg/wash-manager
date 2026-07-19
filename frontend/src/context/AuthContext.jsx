@@ -6,11 +6,15 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [user, setUser] = useState(null);
+  // true tant que le profil n'a pas été résolu (évite de rejeter un admin
+  // pendant le chargement de /auth/me).
+  const [loadingUser, setLoadingUser] = useState(!!token);
 
   // Charge le profil (rôle + site) tant qu'un token est présent.
   useEffect(() => {
-    if (!token) { setUser(null); return; }
-    api.me().then(setUser).catch(() => setUser(null));
+    if (!token) { setUser(null); setLoadingUser(false); return; }
+    setLoadingUser(true);
+    api.me().then(setUser).catch(() => setUser(null)).finally(() => setLoadingUser(false));
   }, [token]);
 
   const login = async (email, password) => {
@@ -24,7 +28,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, isAuth: !!token, isAdmin: user?.role === "admin", login, logout }}>
+    <AuthContext.Provider value={{ token, user, loadingUser, isAuth: !!token, isAdmin: user?.role === "admin", login, logout }}>
       {children}
     </AuthContext.Provider>
   );

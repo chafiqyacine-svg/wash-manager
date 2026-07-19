@@ -23,7 +23,8 @@ function Protected({ children }) {
 }
 
 function AdminOnly({ children }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, loadingUser } = useAuth();
+  if (loadingUser) return null; // attend la résolution du profil avant de décider
   return isAdmin ? children : <Navigate to="/" replace />;
 }
 

@@ -14,6 +14,7 @@ from app.api.routes import (
     forfaits,
     live,
     parametres,
+    payments,
     queue,
     rapports,
     sites,
@@ -53,6 +54,7 @@ app.include_router(tickets.router, prefix=API_PREFIX)
 app.include_router(sites.router, prefix=API_PREFIX)
 app.include_router(bays.router, prefix=API_PREFIX)
 app.include_router(queue.router, prefix=API_PREFIX)
+app.include_router(payments.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(transactions.router, prefix=API_PREFIX)
 app.include_router(vehicules.router, prefix=API_PREFIX)

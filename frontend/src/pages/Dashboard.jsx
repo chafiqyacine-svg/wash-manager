@@ -3,6 +3,7 @@ import BayStations from "../components/BayStations.jsx";
 import DashboardCharts from "../components/DashboardCharts.jsx";
 import RecentEvents from "../components/RecentEvents.jsx";
 import StatCard from "../components/StatCard.jsx";
+import TransactionsCard from "../components/TransactionsCard.jsx";
 import WashDetailsTable from "../components/WashDetailsTable.jsx";
 import { api } from "../api/client.js";
 
@@ -67,11 +68,14 @@ export default function Dashboard() {
         <BayStations siteId={siteId || undefined} />
       </div>
 
-      {/* Package Analytics + Recent Events */}
+      {/* Transactions + Package Analytics + Recent Events */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">
+        <TransactionsCard siteId={siteId || undefined} />
         <div className="xl:col-span-2">
           <DashboardCharts data={graphiques} />
         </div>
+      </div>
+      <div className="mt-4">
         <RecentEvents />
       </div>
     </div>

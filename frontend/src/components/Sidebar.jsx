@@ -8,7 +8,7 @@ const MENU = [
   { to: "/queue", label: "Queue Management", icon: "🚗" },
   { to: "/vehicules", label: "Customer Management", icon: "👥" },
   { to: "/bays", label: "Bay Management", icon: "🅿️" },
-  { to: "/caisse", label: "Payments", icon: "💲" },
+  { to: "/payments", label: "Payments", icon: "💲" },
   { to: "/anomalies", label: "Anomalies", icon: "⚠️" },
   { to: "/history", label: "Historique", icon: "🧾" },
   { to: "/reports", label: "Rapports", icon: "📊" },

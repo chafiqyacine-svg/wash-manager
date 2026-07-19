@@ -70,6 +70,8 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Queue Management + mode manuel** (sans caméras) : `GET /queue`,
   `POST /queue/demarrer` (ticket → baie), `POST /queue/terminer`. La station peut
   fonctionner entièrement à la main en attendant l'installation des caméras.
+- **Paiements** : `GET /payments` (Paid/Pending, totaux, par site). Page Payments
+  + panneau « Transactions » sur le dashboard.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).

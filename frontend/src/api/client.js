@@ -55,6 +55,8 @@ export const api = {
     request(`/bays?statut=${statut}${siteId ? `&site_id=${siteId}` : ""}`),
   creerBay: (payload) => request("/bays", { method: "POST", body: payload }),
   modifierBay: (id, payload) => request(`/bays/${id}`, { method: "PATCH", body: payload }),
+  // Paiements
+  payments: (siteId) => request(`/payments${siteId ? `?site_id=${siteId}` : ""}`),
   // Queue Management (mode manuel sans caméras)
   queue: (siteId) => request(`/queue${siteId ? `?site_id=${siteId}` : ""}`),
   demarrerLavage: (ticketId, bayId) =>

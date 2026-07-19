@@ -47,7 +47,7 @@ sequenceDiagram
     participant V as Véhicule
     participant AI as Pipeline IA (ai/)
     participant BE as Backend (backend/)
-    participant POS as Caisse (POS)
+    participant CA as Caisse intégrée (dashboard)
 
     V->>AI: franchit ligne entrée
     AI->>BE: event ENTREE (track_id)
@@ -60,8 +60,8 @@ sequenceDiagram
     V->>AI: franchit ligne sortie
     AI->>BE: event SORTIE
     BE->>BE: classification forfait effectué
-    POS-->>BE: ticket (forfait payé)
-    BE->>BE: rapprochement + détection anomalies
+    CA-->>BE: ticket créé à l'encaissement (forfait payé)
+    BE->>BE: rapprochement ticket + détection anomalies
     BE-->>BE: si CRITIQUE/HAUTE → alerte WhatsApp
 ```
 

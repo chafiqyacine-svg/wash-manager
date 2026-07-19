@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 const LINKS = [
   { to: "/", label: "Tableau de bord" },
+  { to: "/caisse", label: "Caisse" },
   { to: "/live", label: "Temps réel" },
   { to: "/history", label: "Historique" },
   { to: "/anomalies", label: "Anomalies" },

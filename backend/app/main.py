@@ -13,6 +13,7 @@ from app.api.routes import (
     forfaits,
     live,
     rapports,
+    tickets,
     transactions,
     vehicules,
 )
@@ -44,6 +45,7 @@ app.add_middleware(
 # Routes protégées / publiques
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(events.router, prefix=API_PREFIX)
+app.include_router(tickets.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(transactions.router, prefix=API_PREFIX)
 app.include_router(vehicules.router, prefix=API_PREFIX)

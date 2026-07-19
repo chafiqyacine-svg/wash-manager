@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Sidebar from "./components/Sidebar.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import Anomalies from "./pages/Anomalies.jsx";
+import Caisse from "./pages/Caisse.jsx";
 import Config from "./pages/Config.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Employees from "./pages/Employees.jsx";
@@ -35,6 +36,7 @@ export default function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/caisse" element={<Caisse />} />
                 <Route path="/live" element={<LiveView />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/anomalies" element={<Anomalies />} />

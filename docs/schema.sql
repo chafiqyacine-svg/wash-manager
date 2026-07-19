@@ -53,6 +53,22 @@ CREATE TABLE transactions (
 CREATE INDEX idx_transactions_track ON transactions(track_id);
 CREATE INDEX idx_transactions_statut ON transactions(statut);
 
+-- Caisse intégrée (remplace un POS externe tant qu'il n'y en a pas).
+CREATE TABLE tickets (
+    id             SERIAL PRIMARY KEY,
+    forfait_id     INTEGER NOT NULL REFERENCES forfaits(id),
+    prix           NUMERIC(10,2) NOT NULL,
+    plaque         VARCHAR(32),                   -- facultatif (meilleur rapprochement)
+    employe_id     INTEGER REFERENCES employes(id),
+    reference      VARCHAR(64),
+    heure          TIMESTAMPTZ DEFAULT now(),
+    statut         VARCHAR(16) DEFAULT 'ouvert',  -- ouvert | rapproche | annule
+    transaction_id INTEGER REFERENCES transactions(id),
+    created_at     TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_tickets_statut ON tickets(statut);
+CREATE INDEX idx_tickets_plaque ON tickets(plaque);
+
 CREATE TABLE anomalies (
     id             SERIAL PRIMARY KEY,
     transaction_id INTEGER REFERENCES transactions(id),

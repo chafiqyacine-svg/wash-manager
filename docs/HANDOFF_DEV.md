@@ -17,12 +17,17 @@ briques qui dépendent de l'environnement réel (modèles, caméras, caisse, UI)
 - [ ] `config.yaml` — **calibrer** lignes d'entrée/sortie et polygones de zones.
 - [ ] `pipeline/events.py` — file de retry locale si le réseau tombe.
 
+## Source du « forfait payé » — caisse intégrée (pas de POS)
+La station n'a **pas de système de caisse**. On utilise donc une **caisse
+intégrée** : l'opérateur crée un ticket à l'encaissement (page « Caisse » du
+dashboard → `POST /tickets`). Ce ticket est la source de vérité du forfait payé,
+rapprochée automatiquement de la transaction détectée (`services/reconciliation.py`,
+implémenté + testé). Le jour où un vrai POS arrive, il suffira d'alimenter la
+table `tickets` via un connecteur — le reste ne change pas.
+
 ## Priorité 2 — logique serveur (`backend/`)
-- [ ] `services/ingestion.py` — **rapprochement POS** (ticket ↔ véhicule) : c'est le
-      point le plus dépendant de votre système de caisse. En déduire `forfait_paye`,
-      `forfait_id`, `conforme`, puis **persister les anomalies** et déclencher les
-      alertes.
 - [ ] `services/ingestion.py` — résolution employé via badge NFC (`_on_badge`).
+- [ ] `services/ingestion.py` — idempotence des événements (rejeux réseau).
 - [ ] `services/rapport.py` — requêtes d'agrégation + génération PDF (ReportLab).
 - [ ] `services/notification.py` — appel réel WhatsApp Business API.
 - [ ] `api/routes/live.py` — auth WebSocket + diffusion des mises à jour temps réel.
@@ -41,6 +46,9 @@ briques qui dépendent de l'environnement réel (modèles, caméras, caisse, UI)
 - Modèle de données complet (SQLAlchemy + schéma SQL de référence).
 - **Classification du forfait effectué** (zones + durée) — `services/classification.py`.
 - **Règles de détection d'anomalies** (6 cas du cahier des charges) — `services/anomalie.py`.
+- **Rapprochement caisse ↔ transaction** (plaque puis proximité temporelle) — `services/reconciliation.py`.
+- **Clôture de transaction** : classification + rapprochement + persistance des anomalies — `services/ingestion.py`.
+- **Caisse intégrée** : modèle `tickets`, API `POST/GET/annuler`, page Caisse.
 - **Géométrie zones/lignes** (franchissement, point-dans-polygone) — `ai/pipeline/zones.py`.
 - Contrat d'événements IA ↔ backend.
 - Squelette d'API (auth JWT, events, dashboard, transactions, anomalies,

@@ -7,21 +7,27 @@ Machine à états simple, pilotée par le `track_id` du véhicule :
   ZONE_ENTER  -> ouvre le chrono de la zone (B/C/D)
   ZONE_EXIT   -> ferme le chrono de la zone, calcule la durée
   BADGE       -> associe l'employé (badge NFC) à la transaction
-  SORTIE      -> clôture : durée totale, classification, rapprochement POS, anomalies
+  SORTIE      -> clôture : durée totale, classification, rapprochement caisse, anomalies
 
-Ce service est un SQUELETTE : la structure et les branches sont posées, mais le
-détail (rapprochement POS, gestion des cas limites, idempotence) est à finir.
+La clôture (rapprochement ticket + persistance des anomalies) est implémentée.
+Reste en TODO(dev) : la résolution employé par badge NFC, l'idempotence des
+événements, et le déclenchement des alertes temps réel (WhatsApp).
 """
-from datetime import datetime
+from datetime import date, datetime, time
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Transaction, Vehicule
+from app.models import Anomalie, Ticket, Transaction, Vehicule
 from app.models.enums import ForfaitNom, ZoneCode
 from app.schemas.event import EventIn, EventType
 from app.services import classification as clf
 from app.services.anomalie import ContexteTransaction, detecter_anomalies
+from app.services.reconciliation import (
+    InfoTransaction,
+    TicketCandidat,
+    choisir_ticket,
+)
 
 
 def traiter_evenement(db: Session, event: EventIn) -> Transaction | None:
@@ -121,16 +127,19 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
     forfait_detecte = clf.deduire_forfait_effectue(parcours)
     txn.forfait_detecte = forfait_detecte.value
 
-    # 2) Rapprochement POS
-    # TODO(dev): récupérer le ticket POS correspondant (par plaque et/ou fenêtre
-    #   horaire) via le connecteur caisse, en déduire forfait_paye + forfait_id +
-    #   txn.conforme. Ci-dessous : placeholder à remplacer.
-    forfait_paye: ForfaitNom | None = None  # TODO(dev)
+    # 2) Rapprochement avec la caisse intégrée (ticket -> forfait payé)
+    ticket = _rapprocher_ticket(db, txn)
+    forfait_paye: ForfaitNom | None = None
+    if ticket is not None:
+        txn.forfait_id = ticket.forfait_id
+        forfait_paye = ForfaitNom(ticket.forfait.nom)
+        ticket.statut = "rapproche"
+        ticket.transaction_id = txn.id
+        txn.conforme = clf.est_conforme(
+            forfait_paye, parcours, temps_min_paye=ticket.forfait.temps_min
+        )
 
-    if forfait_paye is not None:
-        txn.conforme = clf.est_conforme(forfait_paye, parcours, temps_min_paye=0)  # TODO(dev): vrai seuil
-
-    # 3) Détection d'anomalies
+    # 3) Détection + persistance des anomalies
     ctx = ContexteTransaction(
         forfait_paye=forfait_paye,
         forfait_detecte=forfait_detecte,
@@ -138,12 +147,42 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
         duree_totale_min=duree_min,
         plaque_lue=txn.vehicule_id is not None,
     )
-    anomalies = detecter_anomalies(ctx)
-    # TODO(dev): persister ces anomalies (models.Anomalie) liées à txn.id
-    #   puis déclencher services.notification pour les sévérités CRITIQUE/HAUTE.
-    _ = anomalies
+    for a in detecter_anomalies(ctx):
+        db.add(Anomalie(
+            transaction_id=txn.id,
+            type=a.type,
+            severite=a.severite,
+            description=a.description,
+            photo=txn.photo_entree,
+        ))
+        # TODO(dev): pour severite CRITIQUE/HAUTE, déclencher l'alerte WhatsApp
+        #   (services.notification.envoyer_alerte_whatsapp) via une tâche de fond,
+        #   puis marquer Anomalie.notifie = True.
 
     return txn
+
+
+def _rapprocher_ticket(db: Session, txn: Transaction) -> Ticket | None:
+    """Cherche le ticket de caisse correspondant à la transaction clôturée."""
+    # Tickets ouverts de la journée (borne raisonnable pour le rapprochement).
+    debut_jour = datetime.combine(date.today(), time.min)
+    tickets = db.scalars(
+        select(Ticket).where(
+            Ticket.statut == "ouvert",
+            Ticket.heure >= debut_jour,
+        )
+    ).all()
+
+    plaque = txn.vehicule.plaque if txn.vehicule else None
+    candidats = [TicketCandidat(id=t.id, plaque=t.plaque, heure=t.heure) for t in tickets]
+    choisi = choisir_ticket(
+        InfoTransaction(plaque=plaque, heure_entree=txn.heure_entree,
+                        heure_sortie=txn.heure_sortie),
+        candidats,
+    )
+    if choisi is None:
+        return None
+    return next((t for t in tickets if t.id == choisi.id), None)
 
 
 # ─── Helpers zones ───────────────────────────────────────────────────────────

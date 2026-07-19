@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Sidebar from "./components/Sidebar.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import Anomalies from "./pages/Anomalies.jsx";
+import Bays from "./pages/Bays.jsx";
 import Caisse from "./pages/Caisse.jsx";
 import Config from "./pages/Config.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -11,6 +12,7 @@ import LiveView from "./pages/LiveView.jsx";
 import Login from "./pages/Login.jsx";
 import Rapprochement from "./pages/Rapprochement.jsx";
 import Reports from "./pages/Reports.jsx";
+import Vehicules from "./pages/Vehicules.jsx";
 
 function Protected({ children }) {
   const { isAuth } = useAuth();
@@ -41,6 +43,8 @@ export default function App() {
                 <Route path="/live" element={<LiveView />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/anomalies" element={<Anomalies />} />
+                <Route path="/bays" element={<Bays />} />
+                <Route path="/vehicules" element={<Vehicules />} />
                 <Route path="/rapprochement" element={<Rapprochement />} />
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/reports" element={<Reports />} />

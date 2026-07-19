@@ -30,3 +30,14 @@ class AnomalieSeverite(str, enum.Enum):
     HAUTE = "haute"
     MOYENNE = "moyenne"
     BASSE = "basse"
+
+
+class BayStatut(str, enum.Enum):
+    OPERATIONNELLE = "operationnelle"
+    HORS_SERVICE = "hors_service"
+
+
+class StatutLavage(str, enum.Enum):
+    """État temporel d'un lavage (dérivé), affiché dans « Wash Details »."""
+    ONTIME = "ontime"
+    DELAYED = "delayed"

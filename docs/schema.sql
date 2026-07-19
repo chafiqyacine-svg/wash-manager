@@ -31,11 +31,32 @@ CREATE TABLE forfaits (
     created_at     TIMESTAMPTZ DEFAULT now()
 );
 
+-- Multi-emplacements : sites et leurs baies/stations.
+CREATE TABLE sites (
+    id         SERIAL PRIMARY KEY,
+    nom        VARCHAR(128) NOT NULL,
+    adresse    VARCHAR(255),
+    actif      BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE bays (
+    id         SERIAL PRIMARY KEY,
+    site_id    INTEGER NOT NULL REFERENCES sites(id),
+    numero     INTEGER NOT NULL,
+    statut     VARCHAR(20) DEFAULT 'operationnelle',  -- operationnelle | hors_service
+    staff      INTEGER DEFAULT 0,
+    actif      BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_bays_site ON bays(site_id);
+
 CREATE TABLE transactions (
     id              SERIAL PRIMARY KEY,
     vehicule_id     INTEGER REFERENCES vehicules(id),
     employe_id      INTEGER REFERENCES employes(id),
     forfait_id      INTEGER REFERENCES forfaits(id),
+    bay_id          INTEGER REFERENCES bays(id),
     track_id        VARCHAR(64),
     heure_entree    TIMESTAMPTZ,
     heure_sortie    TIMESTAMPTZ,

@@ -46,6 +46,12 @@ export const api = {
   kpi: () => request("/dashboard/kpi"),
   enCours: () => request("/dashboard/en-cours"),
   graphiques: () => request("/dashboard/graphiques"),
+  apercu: (siteId) => request(`/dashboard/apercu${siteId ? `?site_id=${siteId}` : ""}`),
+  washDetails: (siteId) => request(`/dashboard/wash-details${siteId ? `?site_id=${siteId}` : ""}`),
+  // Multi-sites & baies
+  sites: () => request("/sites"),
+  bays: (statut = "all", siteId) =>
+    request(`/bays?statut=${statut}${siteId ? `&site_id=${siteId}` : ""}`),
   transactions: (params = "") => request(`/transactions${params}`),
   anomalies: (params = "") => request(`/anomalies${params}`),
   resoudreAnomalie: (id) => request(`/anomalies/${id}/resoudre`, { method: "POST" }),

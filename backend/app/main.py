@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import (
     anomalies,
     auth,
+    bays,
     dashboard,
     employes,
     events,
@@ -14,6 +15,7 @@ from app.api.routes import (
     live,
     parametres,
     rapports,
+    sites,
     tickets,
     transactions,
     vehicules,
@@ -47,6 +49,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(events.router, prefix=API_PREFIX)
 app.include_router(tickets.router, prefix=API_PREFIX)
+app.include_router(sites.router, prefix=API_PREFIX)
+app.include_router(bays.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(transactions.router, prefix=API_PREFIX)
 app.include_router(vehicules.router, prefix=API_PREFIX)

@@ -17,7 +17,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from sqlalchemy import select
 
 from app.core.database import Base, SessionLocal, engine
-from app.models import Employe, Forfait, Ticket, Transaction, Vehicule
+from app.models import Bay, Employe, Forfait, Ticket, Transaction, Vehicule
 from app.services.ingestion import finaliser_transaction
 
 EMPLOYES = ["Youssef", "Karim", "Rachid", "Hamza"]
@@ -42,13 +42,20 @@ def generer(nb_jours: int = 7, par_jour: int = 25) -> None:
             raise SystemExit("Lancez d'abord `python -m app.db.seed` (forfaits manquants).")
 
         employes = _assurer_employes(db)
+        bays = db.scalars(select(Bay)).all()  # peut être vide si seed sans sites
 
         for d in range(nb_jours):
             jour = date.today() - timedelta(days=d)
             for i in range(par_jour):
-                _generer_transaction(db, jour, i, forfaits, employes)
+                _generer_transaction(db, jour, i, forfaits, employes, bays)
+
+        # Quelques lavages EN COURS aujourd'hui (peuplent « ongoing » + stations).
+        if bays:
+            _generer_en_cours(db, forfaits, employes, bays, nb=min(len(bays), 5))
+
         db.commit()
-        print(f"Démo générée : {nb_jours} jour(s) × ~{par_jour} véhicules.")
+        print(f"Démo générée : {nb_jours} jour(s) × ~{par_jour} véhicules "
+              f"+ {min(len(bays), 5) if bays else 0} en cours.")
     finally:
         db.close()
 
@@ -63,7 +70,18 @@ def _assurer_employes(db) -> list[Employe]:
     return emps
 
 
-def _generer_transaction(db, jour: date, i: int, forfaits: dict, employes: list) -> None:
+def _vehicule(db, plaque: str, base: datetime) -> Vehicule:
+    vehicule = db.scalar(select(Vehicule).where(Vehicule.plaque == plaque))
+    if vehicule is None:
+        vehicule = Vehicule(plaque=plaque, premiere_visite=base,
+                            derniere_visite=base, nombre_visites=1)
+        db.add(vehicule)
+        db.flush()
+    return vehicule
+
+
+def _generer_transaction(db, jour: date, i: int, forfaits: dict, employes: list,
+                         bays: list) -> None:
     forfait_paye = random.choices(["Rapide", "Premium", "Complet"], weights=[5, 3, 2])[0]
     forfait_effectue = forfait_paye
     scenario = random.choices(
@@ -75,19 +93,13 @@ def _generer_transaction(db, jour: date, i: int, forfaits: dict, employes: list)
     # Horodatage : réparti sur la journée (8h → 20h).
     base = datetime.combine(jour, time(8, 0), tzinfo=timezone.utc) + timedelta(minutes=i * 25)
     plaque = _plaque()
-
-    # Véhicule
-    vehicule = db.scalar(select(Vehicule).where(Vehicule.plaque == plaque))
-    if vehicule is None:
-        vehicule = Vehicule(plaque=plaque, premiere_visite=base,
-                            derniere_visite=base, nombre_visites=1)
-        db.add(vehicule)
-        db.flush()
+    vehicule = _vehicule(db, plaque, base)
 
     # Transaction + temps par zone
     txn = Transaction(
         track_id=_track(), vehicule_id=vehicule.id,
         employe_id=random.choice(employes).id,
+        bay_id=random.choice(bays).id if bays else None,
         heure_entree=base, statut="cloturee",
     )
     t = base
@@ -114,6 +126,23 @@ def _generer_transaction(db, jour: date, i: int, forfaits: dict, employes: list)
         db.flush()
 
     finaliser_transaction(db, txn, ticket)
+
+
+def _generer_en_cours(db, forfaits: dict, employes: list, bays: list, nb: int) -> None:
+    """Lavages en cours (une baie chacun) pour peupler le temps réel."""
+    maintenant = datetime.now(timezone.utc)
+    for bay in random.sample(bays, nb):
+        forfait_nom = random.choice(list(forfaits))
+        base = maintenant - timedelta(minutes=random.randint(3, 15))
+        plaque = _plaque()
+        vehicule = _vehicule(db, plaque, base)
+        txn = Transaction(
+            track_id=_track(), vehicule_id=vehicule.id,
+            employe_id=random.choice(employes).id, bay_id=bay.id,
+            forfait_id=forfaits[forfait_nom].id,
+            heure_entree=base, statut="en_cours", zone_b_debut=base,
+        )
+        db.add(txn)
 
 
 if __name__ == "__main__":

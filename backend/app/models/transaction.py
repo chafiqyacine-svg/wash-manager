@@ -28,6 +28,8 @@ class Transaction(Base):
     vehicule_id: Mapped[int | None] = mapped_column(ForeignKey("vehicules.id"))
     employe_id: Mapped[int | None] = mapped_column(ForeignKey("employes.id"))
     forfait_id: Mapped[int | None] = mapped_column(ForeignKey("forfaits.id"))
+    # Baie où le lavage a lieu (alimente le panneau « Wash Bay Stations »).
+    bay_id: Mapped[int | None] = mapped_column(ForeignKey("bays.id"), index=True)
 
     # Identifiant de suivi (track_id) attribué par le tracker du pipeline IA.
     # Sert à rapprocher les événements successifs d'un même véhicule.

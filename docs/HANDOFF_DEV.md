@@ -59,6 +59,12 @@ table `tickets` via un connecteur — le reste ne change pas.
   (`DELETE`, refusé si référencé) depuis l'écran Configuration. La classification
   et les anomalies sont **pilotées par la base** (ForfaitDef) → tout nouveau
   service fonctionne de bout en bout, sans toucher au code.
+- **Multi-emplacements** : modèles `sites` + `bays`, transactions rattachées à une
+  baie. Endpoints `/sites`, `/bays` (état, lavage en cours, file, temps moyen,
+  staff), `/dashboard/apercu` (4 cartes + delta vs veille), `/dashboard/wash-details`.
+  Dashboard refondu (style « Clean It ») avec sélecteur de site, Wash Details,
+  Wash Bay Stations (onglets), Package Analytics, Recent Events. Pages Bay
+  Management & Customer Management.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).

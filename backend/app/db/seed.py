@@ -11,9 +11,15 @@ from sqlalchemy import select
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import hash_password
-from app.models import Forfait, Parametre, Utilisateur
-from app.models.enums import ForfaitNom, ZoneCode
+from app.models import Bay, Forfait, Parametre, Site, Utilisateur
+from app.models.enums import BayStatut, ForfaitNom, ZoneCode
 from app.services.parametres import DEFAUTS
+
+# Sites de démonstration (multi-emplacements) et leurs baies.
+SITES_DEFAUT = [
+    {"nom": "Station Casablanca", "adresse": "Bd Zerktouni, Casablanca", "bays": 4},
+    {"nom": "Station Rabat", "adresse": "Av. Hassan II, Rabat", "bays": 3},
+]
 
 # Forfaits par défaut (cf. tableau 7.1 du cahier des charges).
 FORFAITS_DEFAUT = [
@@ -36,6 +42,16 @@ def seed() -> None:
             exists = db.scalar(select(Forfait).where(Forfait.nom == f["nom"]))
             if not exists:
                 db.add(Forfait(**f))
+
+        # Sites + baies (multi-emplacements)
+        if not db.scalar(select(Site)):
+            for s in SITES_DEFAUT:
+                site = Site(nom=s["nom"], adresse=s["adresse"])
+                db.add(site)
+                db.flush()
+                for n in range(1, s["bays"] + 1):
+                    db.add(Bay(site_id=site.id, numero=n,
+                               statut=BayStatut.OPERATIONNELLE.value, staff=3))
 
         # Paramètres configurables (valeurs par défaut)
         for cle, (valeur, description) in DEFAUTS.items():

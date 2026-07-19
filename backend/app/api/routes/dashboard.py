@@ -8,11 +8,24 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Anomalie, Forfait, Transaction
-from app.models.enums import ZoneCode
+from app.models import Anomalie, Bay, Forfait, Ticket, Transaction
+from app.models.enums import StatutLavage, ZoneCode
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"],
                    dependencies=[Depends(get_current_user)])
+
+
+def _bay_ids_du_site(db: Session, site_id: int | None) -> list[int] | None:
+    """IDs des baies d'un site (None => tous les sites, pas de filtre)."""
+    if not site_id:
+        return None
+    return list(db.scalars(select(Bay.id).where(Bay.site_id == site_id)).all())
+
+
+def _delta_pct(courant: float, precedent: float) -> float | None:
+    if precedent == 0:
+        return None
+    return round((courant - precedent) / precedent * 100, 1)
 
 
 @router.get("/kpi")
@@ -76,6 +89,92 @@ def vehicules_en_cours(db: Session = Depends(get_db)) -> list[dict]:
             "zone_courante": zone,
         })
     return resultat
+
+
+@router.get("/apercu")
+def apercu(db: Session = Depends(get_db), site_id: int | None = None) -> dict:
+    """4 cartes d'en-tête (style « Clean It ») avec évolution vs la veille.
+
+    - ongoing  : lavages en cours (instantané)
+    - in_order : tickets payés en attente de lavage
+    - completed: lavages terminés aujourd'hui
+    - revenue  : chiffre d'affaires du jour
+    """
+    bay_ids = _bay_ids_du_site(db, site_id)
+    prix = {f.id: float(f.prix) for f in db.scalars(select(Forfait)).all()}
+
+    def txns_du_jour(jour: date, statut: str) -> list[Transaction]:
+        d0 = datetime.combine(jour, time.min)
+        d1 = d0 + timedelta(days=1)
+        col = Transaction.heure_sortie if statut == "cloturee" else Transaction.heure_entree
+        stmt = select(Transaction).where(Transaction.statut == statut, col >= d0, col < d1)
+        if bay_ids is not None:
+            stmt = stmt.where(Transaction.bay_id.in_(bay_ids))
+        return db.scalars(stmt).all()
+
+    hier = date.today() - timedelta(days=1)
+    completed_today = txns_du_jour(date.today(), "cloturee")
+    completed_hier = txns_du_jour(hier, "cloturee")
+    revenue_today = sum(prix.get(t.forfait_id, 0.0) for t in completed_today if t.forfait_id)
+    revenue_hier = sum(prix.get(t.forfait_id, 0.0) for t in completed_hier if t.forfait_id)
+
+    ongoing_stmt = select(Transaction).where(Transaction.statut == "en_cours")
+    if bay_ids is not None:
+        ongoing_stmt = ongoing_stmt.where(Transaction.bay_id.in_(bay_ids))
+    ongoing = len(db.scalars(ongoing_stmt).all())
+
+    in_order = db.query(Ticket).filter(Ticket.statut == "ouvert").count()
+
+    return {
+        "ongoing": {"valeur": ongoing, "delta_pct": None},
+        "in_order": {"valeur": in_order, "delta_pct": None},
+        "completed": {
+            "valeur": len(completed_today),
+            "delta_pct": _delta_pct(len(completed_today), len(completed_hier)),
+        },
+        "revenue": {
+            "valeur": round(revenue_today, 2),
+            "delta_pct": _delta_pct(revenue_today, revenue_hier),
+        },
+    }
+
+
+@router.get("/wash-details")
+def wash_details(db: Session = Depends(get_db), site_id: int | None = None, limit: int = 12) -> list[dict]:
+    """Tableau « Wash Details » : lavages du jour (véhicule, catégorie, baie,
+    statut ontime/delayed, montant)."""
+    bay_ids = _bay_ids_du_site(db, site_id)
+    debut = datetime.combine(date.today(), time.min)
+
+    stmt = (
+        select(Transaction)
+        .where(Transaction.heure_entree >= debut)
+        .order_by(Transaction.heure_entree.desc())
+        .limit(limit)
+    )
+    if bay_ids is not None:
+        stmt = stmt.where(Transaction.bay_id.in_(bay_ids))
+    txns = db.scalars(stmt).all()
+
+    forfaits = {f.id: f for f in db.scalars(select(Forfait)).all()}
+    bays = {b.id: b.numero for b in db.scalars(select(Bay)).all()}
+
+    lignes = []
+    for t in txns:
+        forfait = forfaits.get(t.forfait_id)
+        # Statut ontime/delayed : dépassement du temps max du forfait.
+        statut = StatutLavage.ONTIME.value
+        if forfait and t.duree_totale and t.duree_totale / 60 > forfait.temps_max:
+            statut = StatutLavage.DELAYED.value
+        lignes.append({
+            "transaction_id": t.id,
+            "vehicule": t.vehicule.plaque if t.vehicule else t.track_id,
+            "categorie": forfait.nom if forfait else t.forfait_detecte,
+            "bay": bays.get(t.bay_id),
+            "statut": statut,
+            "montant": float(forfait.prix) if forfait else None,
+        })
+    return lignes
 
 
 @router.get("/graphiques")

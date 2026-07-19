@@ -10,7 +10,8 @@ psycopg[binary]>=3.1
 alembic>=1.13
 
 # Sécurité / auth
-passlib[bcrypt]>=1.7
+# pbkdf2_sha256 (pur Python) par défaut ; bcrypt optionnel (pin <4.1 si utilisé).
+passlib>=1.7
 python-jose[cryptography]>=3.3
 python-multipart>=0.0.9
 

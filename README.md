@@ -56,6 +56,26 @@ docker compose up -d          # postgres + backend + frontend
 Voir `backend/README.md`, `ai/README.md`, `frontend/README.md` pour le détail de
 chaque brique et la liste des `TODO(dev)`.
 
+## Développer sans caméras (données de démo)
+
+Tant que le matériel n'est pas installé, on peut faire vivre tout le système
+sans une seule caméra :
+
+```bash
+# 1. Données de référence (forfaits + compte admin@wash.local / changeme)
+python -m app.db.seed
+
+# 2a. Jeu de démo direct (plusieurs jours d'historique pour dashboard/rapports)
+python -m app.db.demo 7 25        # 7 jours × ~25 véhicules
+
+# 2b. OU simulateur temps réel (émet des événements comme une vraie caméra,
+#     teste toute la chaîne d'ingestion + rapprochement + anomalies)
+cd ai && python simulator.py --count 30 --anomaly-rate 0.2
+```
+
+Le dashboard, les KPI, l'historique, les anomalies et le rapport PDF sont alors
+pleinement fonctionnels.
+
 ## Feuille de route (phases)
 
 Le système est conçu pour un déploiement **progressif** — chaque phase apporte de

@@ -6,7 +6,10 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# pbkdf2_sha256 : pur Python (hashlib), aucune dépendance native, pas de limite
+# de longueur — évite les frictions passlib/bcrypt. bcrypt reste accepté en
+# vérification si d'anciens hachages existent.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:

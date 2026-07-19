@@ -59,6 +59,11 @@ table `tickets` via un connecteur — le reste ne change pas.
   temps modifiables depuis l'écran Configuration.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
+- **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).
+- **Développement sans caméras** : simulateur d'événements (`ai/simulator.py`) +
+  jeu de démo multi-jours (`app/db/demo.py`) — validés de bout en bout.
+- **Pages câblées** : Dashboard (KPI + en cours), Historique, Anomalies, Caisse,
+  Rapprochement, Configuration (forfaits + fenêtre).
 - **Géométrie zones/lignes** (franchissement, point-dans-polygone) — `ai/pipeline/zones.py`.
 - Contrat d'événements IA ↔ backend.
 - Squelette d'API (auth JWT, events, dashboard, transactions, anomalies,

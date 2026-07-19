@@ -6,9 +6,11 @@ import { api } from "../api/client.js";
 // Le fetch KPI est câblé pour montrer l'intention ; le reste est à compléter.
 export default function Dashboard() {
   const [kpi, setKpi] = useState(null);
+  const [enCours, setEnCours] = useState([]);
 
   useEffect(() => {
     api.kpi().then(setKpi).catch(() => setKpi(null));
+    api.enCours().then(setEnCours).catch(() => setEnCours([]));
     // TODO(dev): ouvrir le WebSocket /api/v1/ws/live pour rafraîchir en temps réel.
   }, []);
 
@@ -23,11 +25,32 @@ export default function Dashboard() {
       </div>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">Véhicules en cours</h2>
-      {/* TODO(dev): tableau des transactions statut=en_cours (api.enCours()) avec
-          zone courante et chronomètre actif. */}
-      <div className="bg-white rounded-lg shadow p-4 text-slate-500">
-        À câbler : liste temps réel des véhicules sur le site.
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-100 text-left">
+            <tr>
+              <th className="p-2">Plaque</th>
+              <th className="p-2">Zone</th>
+              <th className="p-2">Entré à</th>
+            </tr>
+          </thead>
+          <tbody>
+            {enCours.map((v) => (
+              <tr key={v.transaction_id} className="border-t">
+                <td className="p-2">{v.plaque ?? v.track_id}</td>
+                <td className="p-2">Zone {v.zone_courante}</td>
+                <td className="p-2">
+                  {v.heure_entree ? new Date(v.heure_entree).toLocaleTimeString() : "—"}
+                </td>
+              </tr>
+            ))}
+            {enCours.length === 0 && (
+              <tr><td className="p-3 text-slate-500" colSpan={3}>Aucun véhicule sur le site.</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
+      {/* TODO(dev): graphique du volume horaire (Recharts). */}
 
       {/* TODO(dev): graphique du volume horaire (Recharts) — cf. rapport 9.1. */}
     </div>

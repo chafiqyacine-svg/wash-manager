@@ -1,0 +1,22 @@
+# ⚠️ Dépendances edge volumineuses — installer sur la machine de traitement.
+# Adapter les versions torch/onnxruntime à votre accélérateur (CUDA/TensorRT/Coral).
+
+ultralytics>=8.2        # YOLOv8 / YOLO11
+opencv-python>=4.9      # lecture flux + traitement image
+numpy>=1.26
+
+# Tracking (choisir l'un ; ByteTrack est intégré à ultralytics)
+# deep-sort-realtime>=1.3
+
+# LPR / OCR
+easyocr>=1.7            # OU paddleocr — supporte l'arabe
+# paddleocr>=2.7
+
+# Inference optimisée (optionnel selon la cible)
+# onnxruntime-gpu>=1.17
+# tensorrt
+
+# Client backend
+httpx>=0.27
+pydantic>=2.6
+pyyaml>=6.0

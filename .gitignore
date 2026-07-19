@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# IA — poids de modèles & captures (volumineux, hors git)
+*.pt
+*.onnx
+*.engine
+*.weights
+ai/models/*.bin
+ai/captures/
+ai/data/
+
+# Base de données / médias
+*.sqlite3
+media/
+storage/
+
+# Logs & OS
+*.log
+.DS_Store
+.idea/
+.vscode/

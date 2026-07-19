@@ -1,0 +1,10 @@
+{
+  "name": "Wash Manager",
+  "short_name": "WashManager",
+  "description": "Monitoring IA pour station de lavage auto",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": []
+}

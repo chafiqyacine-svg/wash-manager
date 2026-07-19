@@ -1,0 +1,73 @@
+"""Zones & lignes virtuelles : détection de franchissement et de présence.
+
+La géométrie (côté d'une ligne, point-dans-polygone) est implémentée ici car
+purement déterministe. Ce qui reste à finir (TODO(dev)) : choisir le point de
+référence de la bbox (ex: centre du bas) et régler l'hystérésis pour éviter les
+détections parasites.
+"""
+from __future__ import annotations
+
+Point = tuple[float, float]
+
+
+def _cote_ligne(p: Point, a: Point, b: Point) -> float:
+    """Signe indiquant de quel côté de la ligne (a→b) se trouve p."""
+    return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+
+
+class DetecteurLigne:
+    """Détecte le franchissement d'une ligne virtuelle par un track donné.
+
+    Mémorise le dernier côté connu de chaque track ; un changement de signe =
+    franchissement.
+    """
+
+    def __init__(self, a: Point, b: Point) -> None:
+        self.a = a
+        self.b = b
+        self._dernier_cote: dict[str, float] = {}
+
+    def a_franchi(self, track_id: str, point: Point) -> bool:
+        cote = _cote_ligne(point, self.a, self.b)
+        precedent = self._dernier_cote.get(track_id)
+        self._dernier_cote[track_id] = cote
+        if precedent is None:
+            return False
+        # TODO(dev): imposer un seuil sur |cote| pour éviter le bruit près de la ligne.
+        return (precedent < 0 < cote) or (precedent > 0 > cote)
+
+
+def point_dans_polygone(point: Point, polygone: list[Point]) -> bool:
+    """Ray casting : True si le point est à l'intérieur du polygone."""
+    x, y = point
+    dedans = False
+    n = len(polygone)
+    j = n - 1
+    for i in range(n):
+        xi, yi = polygone[i]
+        xj, yj = polygone[j]
+        if ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi + 1e-12) + xi):
+            dedans = not dedans
+        j = i
+    return dedans
+
+
+class DetecteurZone:
+    """Suit l'entrée/sortie d'une zone (polygone) pour chaque track.
+
+    Retourne un événement "enter" ou "exit" au changement d'état, sinon None.
+    """
+
+    def __init__(self, polygone: list[Point]) -> None:
+        self.polygone = polygone
+        self._present: dict[str, bool] = {}
+
+    def maj(self, track_id: str, point: Point) -> str | None:
+        dedans = point_dans_polygone(point, self.polygone)
+        avant = self._present.get(track_id, False)
+        self._present[track_id] = dedans
+        if dedans and not avant:
+            return "enter"
+        if not dedans and avant:
+            return "exit"
+        return None

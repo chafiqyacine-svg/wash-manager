@@ -1,0 +1,46 @@
+# Configuration du pipeline edge : caméras, zones, connexion backend.
+# TODO(dev): calibrer les coordonnées (pixels) de chaque ligne/zone par caméra,
+#   idéalement via un petit outil d'annotation sur une image figée du flux.
+
+backend:
+  events_url: "http://backend:8000/api/v1/events"
+  api_key_env: "AI_INGEST_API_KEY"   # la clé est lue depuis l'environnement
+
+models:
+  vehicule_detector: "ai/models/yolo_vehicules.pt"   # TODO(dev): fournir les poids
+  plaque_detector: "ai/models/yolo_plaques.pt"       # TODO(dev): fournir les poids
+  ocr_lang: ["ar", "en"]                              # plaques marocaines
+
+tracking:
+  type: "bytetrack"   # bytetrack | deepsort
+  max_age: 30
+
+# Une entrée par caméra. `role` détermine ce que le pipeline y cherche.
+cameras:
+  - id: "cam_entree"
+    role: "entree"          # ligne d'entrée (A) + LPR
+    source: "rtsp://user:pass@192.168.1.10:554/stream1"  # TODO(dev)
+    ligne_entree: [[100, 400], [900, 400]]   # [x1,y1],[x2,y2] — TODO(dev): calibrer
+
+  - id: "cam_lavage"
+    role: "zone"
+    zone_code: "B"          # lavage extérieur
+    source: "rtsp://user:pass@192.168.1.11:554/stream1"
+    polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]  # TODO(dev): calibrer
+
+  - id: "cam_aspiration"
+    role: "zone"
+    zone_code: "C"          # aspiration
+    source: "rtsp://user:pass@192.168.1.12:554/stream1"
+    polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]
+
+  - id: "cam_polish"
+    role: "zone"
+    zone_code: "D"          # polish / cire
+    source: "rtsp://user:pass@192.168.1.13:554/stream1"
+    polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]
+
+  - id: "cam_sortie"
+    role: "sortie"          # ligne de sortie (E)
+    source: "rtsp://user:pass@192.168.1.14:554/stream1"
+    ligne_sortie: [[100, 400], [900, 400]]

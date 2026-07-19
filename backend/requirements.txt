@@ -1,0 +1,23 @@
+# API
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+
+# Base de données
+sqlalchemy>=2.0
+psycopg[binary]>=3.1
+alembic>=1.13
+
+# Sécurité / auth
+passlib[bcrypt]>=1.7
+python-jose[cryptography]>=3.3
+python-multipart>=0.0.9
+
+# Rapports & notifications
+reportlab>=4.1        # génération PDF du rapport journalier
+httpx>=0.27           # appels WhatsApp Business API
+apscheduler>=3.10     # planification du rapport journalier
+
+# Dev
+pytest>=8.0

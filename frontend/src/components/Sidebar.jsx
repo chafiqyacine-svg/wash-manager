@@ -8,10 +8,16 @@ const MENU = [
   { to: "/queue", label: "Queue Management", icon: "🚗" },
   { to: "/vehicules", label: "Customer Management", icon: "👥" },
   { to: "/bays", label: "Bay Management", icon: "🅿️" },
+  { to: "/employees", label: "Employés", icon: "🧑‍🔧" },
   { to: "/payments", label: "Payments", icon: "💲" },
   { to: "/anomalies", label: "Anomalies", icon: "⚠️" },
   { to: "/history", label: "Historique", icon: "🧾" },
   { to: "/reports", label: "Rapports", icon: "📊" },
+];
+
+// Réservé aux administrateurs.
+const ADMIN = [
+  { to: "/users", label: "Utilisateurs", icon: "🔑" },
 ];
 
 const SUPPORT = [
@@ -36,7 +42,7 @@ function Item({ to, label, icon }) {
 }
 
 export default function Sidebar() {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   return (
     <aside className="w-64 bg-white border-r border-slate-100 flex flex-col p-4">
       <div className="flex items-center gap-2 px-2 mb-6">
@@ -47,6 +53,7 @@ export default function Sidebar() {
       <div className="text-xs text-slate-400 px-3 mb-1">Menu</div>
       <nav className="space-y-1">
         {MENU.map((m) => <Item key={m.to} {...m} />)}
+        {isAdmin && ADMIN.map((m) => <Item key={m.to} {...m} />)}
       </nav>
 
       <div className="text-xs text-slate-400 px-3 mt-6 mb-1">Support</div>

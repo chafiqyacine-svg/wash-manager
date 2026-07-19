@@ -41,3 +41,9 @@ class StatutLavage(str, enum.Enum):
     """État temporel d'un lavage (dérivé), affiché dans « Wash Details »."""
     ONTIME = "ontime"
     DELAYED = "delayed"
+
+
+class Role(str, enum.Enum):
+    ADMIN = "admin"        # accès total, gestion des utilisateurs
+    MANAGER = "manager"    # gestion d'un site
+    CAISSIER = "caissier"  # caisse + file d'attente d'un site

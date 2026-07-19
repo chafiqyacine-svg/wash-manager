@@ -75,6 +75,15 @@ table `tickets` via un connecteur — le reste ne change pas.
   signal `{"type":"update"}` aux points de mutation (événements IA, file d'attente,
   tickets). Côté frontend, `LiveProvider` déclenche le re-fetch automatique
   (dashboard, stations, file, transactions). Validé de bout en bout par test E2E.
+- **Rôles & accès** : rôles admin / manager / caissier + `site_id` sur l'utilisateur.
+  `require_role(...)`, `GET /auth/me`, gestion des utilisateurs admin (`/users`).
+  Frontend : menu adapté au rôle, page Utilisateurs (admin), garde de route.
+  TODO(dev) : filtrer les données par `site_id` de l'utilisateur sur chaque endpoint.
+- **Page Employés + classement** : `GET /employes/performance` (véhicules, temps
+  moyen, conformité, revenus, score, trié) + écran Employés.
+- **Mode test vidéo (IA)** : `Detector` (ultralytics) et `CameraStream` (RTSP ou
+  fichier) fonctionnels + `ai/detect_video.py` — teste la détection de véhicules
+  sur une vidéo avec YOLO pré-entraîné, sans caméras installées.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).

@@ -14,11 +14,17 @@ import Payments from "./pages/Payments.jsx";
 import Queue from "./pages/Queue.jsx";
 import Rapprochement from "./pages/Rapprochement.jsx";
 import Reports from "./pages/Reports.jsx";
+import Users from "./pages/Users.jsx";
 import Vehicules from "./pages/Vehicules.jsx";
 
 function Protected({ children }) {
   const { isAuth } = useAuth();
   return isAuth ? children : <Navigate to="/login" replace />;
+}
+
+function AdminOnly({ children }) {
+  const { isAdmin } = useAuth();
+  return isAdmin ? children : <Navigate to="/" replace />;
 }
 
 function Layout({ children }) {
@@ -51,6 +57,7 @@ export default function App() {
                 <Route path="/vehicules" element={<Vehicules />} />
                 <Route path="/rapprochement" element={<Rapprochement />} />
                 <Route path="/employees" element={<Employees />} />
+                <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/config" element={<Config />} />
               </Routes>

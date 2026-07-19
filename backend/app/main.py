@@ -20,6 +20,7 @@ from app.api.routes import (
     sites,
     tickets,
     transactions,
+    users,
     vehicules,
 )
 from app.core.config import settings
@@ -53,6 +54,7 @@ app.add_middleware(
 
 # Routes protégées / publiques
 app.include_router(auth.router, prefix=API_PREFIX)
+app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(events.router, prefix=API_PREFIX)
 app.include_router(tickets.router, prefix=API_PREFIX)
 app.include_router(sites.router, prefix=API_PREFIX)

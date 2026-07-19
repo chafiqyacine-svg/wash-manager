@@ -49,7 +49,24 @@ anomalies) : celle-ci vit dans le backend.
 - Entraîner/affiner l'OCR sur les caractères arabes des plaques marocaines.
 - Régler le tracking (ré-identification inter-caméras si multi-flux).
 
+## Tester la détection SANS caméras (sur une vidéo)
+
+Avant l'installation, on peut valider la détection de véhicules sur une simple
+vidéo (filmée au téléphone) avec les poids YOLO pré-entraînés (classe « voiture »
+déjà connue). Aucun matériel requis.
+
+```bash
+pip install ultralytics opencv-python
+cd ai
+python detect_video.py --video ma_video.mp4 --out annote.mp4
+# avec comptage sur une ligne virtuelle (x1,y1,x2,y2 en pixels) :
+python detect_video.py --video ma_video.mp4 --ligne 0,540,1920,540 --out annote.mp4
+```
+
+Le `Detector` et `CameraStream` sont fonctionnels : `CameraStream` accepte une
+URL RTSP **ou** un chemin de fichier vidéo comme `source`.
+
 ## Dépendances (voir requirements.txt)
 
-Non installées par défaut (volumineuses : torch, ultralytics…). À installer sur
-la machine edge selon l'accélérateur (CUDA / TensorRT / Coral).
+Volumineuses (torch, ultralytics…). À installer sur la machine edge selon
+l'accélérateur (CUDA / TensorRT / Coral).

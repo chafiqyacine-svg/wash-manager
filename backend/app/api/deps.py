@@ -28,3 +28,12 @@ def require_ingest_key(x_ai_key: str | None = Header(default=None)) -> None:
     """Protège l'endpoint d'ingestion (pipeline `ai/`)."""
     if not verify_ingest_key(x_ai_key):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Clé d'ingestion IA invalide")
+
+
+def require_role(*roles: str):
+    """Fabrique une dépendance exigeant l'un des rôles donnés."""
+    def dependance(user: Utilisateur = Depends(get_current_user)) -> Utilisateur:
+        if user.role not in roles:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Accès refusé (rôle insuffisant)")
+        return user
+    return dependance

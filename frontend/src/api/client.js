@@ -68,6 +68,13 @@ export const api = {
   resoudreAnomalie: (id) => request(`/anomalies/${id}/resoudre`, { method: "POST" }),
   employes: () => request("/employes"),
   metriquesEmploye: (id) => request(`/employes/${id}/metriques`),
+  employePerformance: (jours = 7, siteId) =>
+    request(`/employes/performance?jours=${jours}${siteId ? `&site_id=${siteId}` : ""}`),
+  // Profil & utilisateurs (admin)
+  me: () => request("/auth/me"),
+  users: () => request("/users"),
+  creerUser: (payload) => request("/users", { method: "POST", body: payload }),
+  modifierUser: (id, payload) => request(`/users/${id}`, { method: "PATCH", body: payload }),
   forfaits: () => request("/forfaits"),
   creerForfait: (payload) => request("/forfaits", { method: "POST", body: payload }),
   modifierForfait: (id, payload) => request(`/forfaits/${id}`, { method: "PUT", body: payload }),

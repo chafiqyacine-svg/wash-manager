@@ -15,7 +15,10 @@ function BayCard({ bay }) {
   return (
     <div className="border border-slate-100 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <span className="font-semibold text-slate-700">Baie : {bay.numero}</span>
+        <div>
+          <span className="font-semibold text-slate-700">Baie : {bay.numero}</span>
+          {bay.site_nom && <div className="text-xs text-slate-400">{bay.site_nom}</div>}
+        </div>
         <span className={`w-2.5 h-2.5 rounded-full ${hs ? "bg-red-400" : "bg-emerald-400"}`} />
       </div>
       <div className="flex justify-between text-sm mb-3">

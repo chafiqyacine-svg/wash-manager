@@ -6,13 +6,14 @@ statut (operational / out_of_service / all).
 """
 from datetime import date, datetime, time, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Bay, Forfait, Transaction
+from app.models import Bay, Forfait, Site, Transaction
 from app.models.enums import BayStatut
 
 router = APIRouter(prefix="/bays", tags=["bays"],
@@ -89,6 +90,7 @@ def lister_bays(
             "id": bay.id,
             "numero": bay.numero,
             "site_id": bay.site_id,
+            "site_nom": bay.site.nom if bay.site else None,
             "statut": bay.statut,
             "staff": bay.staff,
             "current_wash": current_wash,
@@ -96,3 +98,42 @@ def lister_bays(
             "avg_time_min": avg_time,
         })
     return resultat
+
+
+class BayCreate(BaseModel):
+    site_id: int
+    numero: int
+    staff: int = 0
+
+
+class BayUpdate(BaseModel):
+    statut: str | None = None   # operationnelle | hors_service
+    staff: int | None = None
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+def creer_bay(payload: BayCreate, db: Session = Depends(get_db)) -> dict:
+    if db.get(Site, payload.site_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Site inconnu")
+    bay = Bay(site_id=payload.site_id, numero=payload.numero, staff=payload.staff,
+              statut=BayStatut.OPERATIONNELLE.value)
+    db.add(bay)
+    db.commit()
+    db.refresh(bay)
+    return {"id": bay.id, "numero": bay.numero, "site_id": bay.site_id}
+
+
+@router.patch("/{bay_id}")
+def modifier_bay(bay_id: int, payload: BayUpdate, db: Session = Depends(get_db)) -> dict:
+    """Change l'état (opérationnelle / hors service) et/ou l'effectif d'une baie."""
+    bay = db.get(Bay, bay_id)
+    if bay is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Baie inconnue")
+    if payload.statut is not None:
+        if payload.statut not in {s.value for s in BayStatut}:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Statut invalide")
+        bay.statut = payload.statut
+    if payload.staff is not None:
+        bay.staff = payload.staff
+    db.commit()
+    return {"id": bay.id, "statut": bay.statut, "staff": bay.staff}

@@ -50,8 +50,17 @@ export const api = {
   washDetails: (siteId) => request(`/dashboard/wash-details${siteId ? `?site_id=${siteId}` : ""}`),
   // Multi-sites & baies
   sites: () => request("/sites"),
+  creerSite: (payload) => request("/sites", { method: "POST", body: payload }),
   bays: (statut = "all", siteId) =>
     request(`/bays?statut=${statut}${siteId ? `&site_id=${siteId}` : ""}`),
+  creerBay: (payload) => request("/bays", { method: "POST", body: payload }),
+  modifierBay: (id, payload) => request(`/bays/${id}`, { method: "PATCH", body: payload }),
+  // Queue Management (mode manuel sans caméras)
+  queue: (siteId) => request(`/queue${siteId ? `?site_id=${siteId}` : ""}`),
+  demarrerLavage: (ticketId, bayId) =>
+    request(`/queue/demarrer?ticket_id=${ticketId}&bay_id=${bayId}`, { method: "POST" }),
+  terminerLavage: (transactionId) =>
+    request(`/queue/terminer?transaction_id=${transactionId}`, { method: "POST" }),
   transactions: (params = "") => request(`/transactions${params}`),
   anomalies: (params = "") => request(`/anomalies${params}`),
   resoudreAnomalie: (id) => request(`/anomalies/${id}/resoudre`, { method: "POST" }),

@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 // vers les pages existantes ; certaines restent des squelettes (TODO(dev)).
 const MENU = [
   { to: "/", label: "Home", icon: "🏠" },
-  { to: "/rapprochement", label: "Queue Management", icon: "🚗" },
+  { to: "/queue", label: "Queue Management", icon: "🚗" },
   { to: "/vehicules", label: "Customer Management", icon: "👥" },
   { to: "/bays", label: "Bay Management", icon: "🅿️" },
   { to: "/caisse", label: "Payments", icon: "💲" },

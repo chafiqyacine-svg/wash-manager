@@ -10,6 +10,7 @@ import Employees from "./pages/Employees.jsx";
 import History from "./pages/History.jsx";
 import LiveView from "./pages/LiveView.jsx";
 import Login from "./pages/Login.jsx";
+import Queue from "./pages/Queue.jsx";
 import Rapprochement from "./pages/Rapprochement.jsx";
 import Reports from "./pages/Reports.jsx";
 import Vehicules from "./pages/Vehicules.jsx";
@@ -44,6 +45,7 @@ export default function App() {
                 <Route path="/history" element={<History />} />
                 <Route path="/anomalies" element={<Anomalies />} />
                 <Route path="/bays" element={<Bays />} />
+                <Route path="/queue" element={<Queue />} />
                 <Route path="/vehicules" element={<Vehicules />} />
                 <Route path="/rapprochement" element={<Rapprochement />} />
                 <Route path="/employees" element={<Employees />} />

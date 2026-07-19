@@ -65,6 +65,11 @@ table `tickets` via un connecteur — le reste ne change pas.
   Dashboard refondu (style « Clean It ») avec sélecteur de site, Wash Details,
   Wash Bay Stations (onglets), Package Analytics, Recent Events. Pages Bay
   Management & Customer Management.
+- **Édition des baies/sites** : `POST /sites`, `POST /bays`, `PATCH /bays/{id}`
+  (hors service / staff). Bay Management éditable (bascule état, +/- staff, ajout).
+- **Queue Management + mode manuel** (sans caméras) : `GET /queue`,
+  `POST /queue/demarrer` (ticket → baie), `POST /queue/terminer`. La station peut
+  fonctionner entièrement à la main en attendant l'installation des caméras.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).

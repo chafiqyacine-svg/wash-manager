@@ -20,6 +20,20 @@ class SiteOut(BaseModel):
     actif: bool
 
 
+class SiteCreate(BaseModel):
+    nom: str
+    adresse: str | None = None
+
+
 @router.get("", response_model=list[SiteOut])
 def lister_sites(db: Session = Depends(get_db)):
     return db.scalars(select(Site).where(Site.actif.is_(True))).all()
+
+
+@router.post("", response_model=SiteOut, status_code=201)
+def creer_site(payload: SiteCreate, db: Session = Depends(get_db)) -> Site:
+    site = Site(nom=payload.nom, adresse=payload.adresse)
+    db.add(site)
+    db.commit()
+    db.refresh(site)
+    return site

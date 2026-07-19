@@ -1,4 +1,5 @@
 """KPI agrégés pour le dashboard (vue temps réel + chiffres du jour)."""
+from collections import Counter
 from datetime import date, datetime, time, timedelta
 
 from fastapi import APIRouter, Depends
@@ -75,3 +76,55 @@ def vehicules_en_cours(db: Session = Depends(get_db)) -> list[dict]:
             "zone_courante": zone,
         })
     return resultat
+
+
+@router.get("/graphiques")
+def donnees_graphiques(db: Session = Depends(get_db)) -> dict:
+    """Séries prêtes pour les graphiques : volume horaire, répartition des
+    forfaits (jour) et tendance sur 7 jours (véhicules + CA)."""
+    debut_jour = datetime.combine(date.today(), time.min)
+    fin_jour = debut_jour + timedelta(days=1)
+    prix = {f.id: float(f.prix) for f in db.scalars(select(Forfait)).all()}
+
+    # Transactions du jour (clôturées)
+    txns_jour = db.scalars(
+        select(Transaction).where(
+            Transaction.statut == "cloturee",
+            Transaction.heure_sortie >= debut_jour,
+            Transaction.heure_sortie < fin_jour,
+        )
+    ).all()
+
+    # Volume par heure (0-23)
+    heures = Counter(t.heure_entree.hour for t in txns_jour if t.heure_entree)
+    volume_horaire = [{"heure": f"{h:02d}h", "vehicules": heures.get(h, 0)} for h in range(7, 22)]
+
+    # Répartition des forfaits (jour)
+    rep = Counter(t.forfait_detecte for t in txns_jour if t.forfait_detecte)
+    repartition_forfaits = [{"forfait": k, "valeur": v} for k, v in rep.items()]
+
+    # Tendance sur 7 jours
+    tendance = []
+    for d in range(6, -1, -1):
+        jour = date.today() - timedelta(days=d)
+        db0 = datetime.combine(jour, time.min)
+        df = db0 + timedelta(days=1)
+        txns = db.scalars(
+            select(Transaction).where(
+                Transaction.statut == "cloturee",
+                Transaction.heure_sortie >= db0,
+                Transaction.heure_sortie < df,
+            )
+        ).all()
+        ca = sum(prix.get(t.forfait_id, 0.0) for t in txns if t.forfait_id)
+        tendance.append({
+            "date": jour.strftime("%d/%m"),
+            "vehicules": len(txns),
+            "ca": round(ca, 2),
+        })
+
+    return {
+        "volume_horaire": volume_horaire,
+        "repartition_forfaits": repartition_forfaits,
+        "tendance": tendance,
+    }

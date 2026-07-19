@@ -45,6 +45,7 @@ export const api = {
   // Endpoints (TODO(dev): consommer dans les pages correspondantes)
   kpi: () => request("/dashboard/kpi"),
   enCours: () => request("/dashboard/en-cours"),
+  graphiques: () => request("/dashboard/graphiques"),
   transactions: (params = "") => request(`/transactions${params}`),
   anomalies: (params = "") => request(`/anomalies${params}`),
   resoudreAnomalie: (id) => request(`/anomalies/${id}/resoudre`, { method: "POST" }),

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import DashboardCharts from "../components/DashboardCharts.jsx";
 import KpiCard from "../components/KpiCard.jsx";
 import { api } from "../api/client.js";
 
@@ -7,10 +8,12 @@ import { api } from "../api/client.js";
 export default function Dashboard() {
   const [kpi, setKpi] = useState(null);
   const [enCours, setEnCours] = useState([]);
+  const [graphiques, setGraphiques] = useState(null);
 
   useEffect(() => {
     api.kpi().then(setKpi).catch(() => setKpi(null));
     api.enCours().then(setEnCours).catch(() => setEnCours([]));
+    api.graphiques().then(setGraphiques).catch(() => setGraphiques(null));
     // TODO(dev): ouvrir le WebSocket /api/v1/ws/live pour rafraîchir en temps réel.
   }, []);
 
@@ -23,6 +26,9 @@ export default function Dashboard() {
         <KpiCard label="Temps moyen" value={kpi?.temps_moyen_min ?? "—"} suffix=" min" />
         <KpiCard label="Taux conformité" value={kpi?.taux_conformite ?? "—"} suffix=" %" />
       </div>
+
+      <DashboardCharts data={graphiques} />
+
 
       <h2 className="text-lg font-semibold mt-8 mb-2">Véhicules en cours</h2>
       <div className="bg-white rounded-lg shadow overflow-x-auto">
@@ -50,7 +56,6 @@ export default function Dashboard() {
           </tbody>
         </table>
       </div>
-      {/* TODO(dev): graphique du volume horaire (Recharts). */}
 
       {/* TODO(dev): graphique du volume horaire (Recharts) — cf. rapport 9.1. */}
     </div>

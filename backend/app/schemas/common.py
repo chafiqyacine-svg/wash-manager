@@ -44,6 +44,10 @@ class ForfaitUpdate(BaseModel):
     temps_max: int | None = None
 
 
+class ForfaitCreate(ForfaitBase):
+    """Création d'un nouveau service/forfait."""
+
+
 # ─── Employés ────────────────────────────────────────────────────────────────
 class EmployeBase(BaseModel):
     nom: str

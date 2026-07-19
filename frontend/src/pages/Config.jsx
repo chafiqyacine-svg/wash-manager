@@ -8,9 +8,12 @@ const ZONES = [
 ];
 
 // Configuration : paramètres réglables (fenêtre de rapprochement) + forfaits.
+const NOUVEAU_VIDE = { nom: "", prix: "", temps_min: "", temps_max: "", zones_requises: ["B"] };
+
 export default function Config() {
   const [fenetre, setFenetre] = useState("");
   const [forfaits, setForfaits] = useState([]);
+  const [nouveau, setNouveau] = useState(NOUVEAU_VIDE);
   const [message, setMessage] = useState("");
 
   const charger = () => {
@@ -18,6 +21,43 @@ export default function Config() {
     api.forfaits().then(setForfaits).catch(() => {});
   };
   useEffect(charger, []);
+
+  const supprimerForfait = async (f) => {
+    setMessage("");
+    try {
+      await api.supprimerForfait(f.id);
+      setMessage(`Forfait ${f.nom} supprimé.`);
+      charger();
+    } catch {
+      setMessage(`Impossible de supprimer ${f.nom} (déjà utilisé dans l'historique).`);
+    }
+  };
+
+  const creerService = async () => {
+    setMessage("");
+    try {
+      await api.creerForfait({
+        nom: nouveau.nom,
+        prix: Number(nouveau.prix),
+        temps_min: Number(nouveau.temps_min),
+        temps_max: Number(nouveau.temps_max),
+        zones_requises: nouveau.zones_requises,
+      });
+      setMessage(`Service ${nouveau.nom} créé.`);
+      setNouveau(NOUVEAU_VIDE);
+      charger();
+    } catch {
+      setMessage("Erreur lors de la création du service (nom déjà pris ?).");
+    }
+  };
+
+  const toggleZoneNouveau = (code) =>
+    setNouveau((n) => ({
+      ...n,
+      zones_requises: n.zones_requises.includes(code)
+        ? n.zones_requises.filter((z) => z !== code)
+        : [...n.zones_requises, code],
+    }));
 
   const enregistrerFenetre = async () => {
     setMessage("");
@@ -90,12 +130,20 @@ export default function Config() {
             <div key={f.id} className="border rounded p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium">{f.nom}</span>
-                <button
-                  onClick={() => enregistrerForfait(f)}
-                  className="text-sm bg-slate-900 text-white px-3 py-1 rounded"
-                >
-                  Enregistrer
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => enregistrerForfait(f)}
+                    className="text-sm bg-slate-900 text-white px-3 py-1 rounded"
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    onClick={() => supprimerForfait(f)}
+                    className="text-sm border border-red-300 text-red-700 px-3 py-1 rounded"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <label className="flex flex-col">
@@ -140,6 +188,53 @@ export default function Config() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Ajout d'un nouveau service */}
+        <div className="border-t mt-4 pt-4">
+          <h3 className="font-medium mb-2">Ajouter un service</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <input
+              className="border rounded px-2 py-1"
+              placeholder="Nom (ex: VIP)"
+              value={nouveau.nom}
+              onChange={(e) => setNouveau({ ...nouveau, nom: e.target.value })}
+            />
+            <input
+              type="number" className="border rounded px-2 py-1" placeholder="Prix"
+              value={nouveau.prix}
+              onChange={(e) => setNouveau({ ...nouveau, prix: e.target.value })}
+            />
+            <input
+              type="number" className="border rounded px-2 py-1" placeholder="Temps min"
+              value={nouveau.temps_min}
+              onChange={(e) => setNouveau({ ...nouveau, temps_min: e.target.value })}
+            />
+            <input
+              type="number" className="border rounded px-2 py-1" placeholder="Temps max"
+              value={nouveau.temps_max}
+              onChange={(e) => setNouveau({ ...nouveau, temps_max: e.target.value })}
+            />
+          </div>
+          <div className="mt-2 flex items-center gap-3 text-sm">
+            {ZONES.map((z) => (
+              <label key={z.code} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={nouveau.zones_requises.includes(z.code)}
+                  onChange={() => toggleZoneNouveau(z.code)}
+                />
+                {z.label}
+              </label>
+            ))}
+            <button
+              onClick={creerService}
+              disabled={!nouveau.nom}
+              className="ml-auto bg-slate-900 text-white px-4 py-1.5 rounded disabled:opacity-40"
+            >
+              Ajouter
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -55,8 +55,10 @@ table `tickets` via un connecteur — le reste ne change pas.
   (associer un ticket ouvert à une transaction non appariée + recalcul anomalies).
 - **Paramètres configurables** (`parametres`) : fenêtre de rapprochement réglable
   depuis l'écran Configuration.
-- **Édition des forfaits** (`PUT /forfaits/{id}`) : prix, zones requises, seuils de
-  temps modifiables depuis l'écran Configuration.
+- **Gestion des services/forfaits** : créer (`POST`), modifier (`PUT`), supprimer
+  (`DELETE`, refusé si référencé) depuis l'écran Configuration. La classification
+  et les anomalies sont **pilotées par la base** (ForfaitDef) → tout nouveau
+  service fonctionne de bout en bout, sans toucher au code.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).

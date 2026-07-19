@@ -18,8 +18,8 @@ from datetime import date, datetime, time
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Anomalie, Ticket, Transaction, Vehicule
-from app.models.enums import ForfaitNom, ZoneCode
+from app.models import Anomalie, Forfait, Ticket, Transaction, Vehicule
+from app.models.enums import ZoneCode
 from app.schemas.event import EventIn, EventType
 from app.services import classification as clf
 from app.services.anomalie import ContexteTransaction, detecter_anomalies
@@ -134,22 +134,23 @@ def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) 
     Réutilisé par la clôture automatique (_on_sortie) ET le rapprochement manuel.
     Idempotent : purge d'abord les anomalies existantes de la transaction.
     """
-    # 1) Classification du forfait effectué
+    # 1) Classification du forfait effectué (piloté par les forfaits en base)
     zones = _zones_visitees(txn)
     duree_min = (txn.duree_totale / 60) if txn.duree_totale else None
-    parcours = clf.ParcoursVehicule(zones_visitees=zones, duree_totale_min=duree_min)
-    forfait_detecte = clf.deduire_forfait_effectue(parcours)
-    txn.forfait_detecte = forfait_detecte.value
+    forfaits_def = _forfaits_def(db)
+    forfait_detecte = clf.deduire_forfait_effectue(zones, forfaits_def)
+    txn.forfait_detecte = forfait_detecte.nom if forfait_detecte else None
 
     # 2) Application du ticket (forfait payé)
-    forfait_paye: ForfaitNom | None = None
+    forfait_paye: clf.ForfaitDef | None = None
     if ticket is not None:
         txn.forfait_id = ticket.forfait_id
-        forfait_paye = ForfaitNom(ticket.forfait.nom)
+        forfait_paye = next((f for f in forfaits_def if f.nom == ticket.forfait.nom), None)
         ticket.statut = "rapproche"
         ticket.transaction_id = txn.id
-        txn.conforme = clf.est_conforme(
-            forfait_paye, parcours, temps_min_paye=ticket.forfait.temps_min
+        txn.conforme = (
+            clf.est_conforme(forfait_paye, zones, duree_min)
+            if forfait_paye else None
         )
     else:
         txn.conforme = None
@@ -175,6 +176,19 @@ def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) 
         #   (services.notification.envoyer_alerte_whatsapp) via une tâche de fond,
         #   puis marquer Anomalie.notifie = True.
     return txn
+
+
+def _forfaits_def(db: Session) -> list[clf.ForfaitDef]:
+    """Charge les forfaits de la base sous forme de définitions pures."""
+    return [
+        clf.ForfaitDef(
+            nom=f.nom,
+            zones_requises=frozenset(f.zones_requises or []),
+            temps_min=f.temps_min,
+            prix=float(f.prix),
+        )
+        for f in db.scalars(select(Forfait)).all()
+    ]
 
 
 def _rapprocher_ticket(db: Session, txn: Transaction) -> Ticket | None:

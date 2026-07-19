@@ -1,14 +1,13 @@
 """★ Règles de détection d'anomalies (cf. sections 7.2 et 9.2).
 
-`detecter_anomalies` est appelé à la clôture d'une transaction (et pour les cas
-POS sans véhicule / véhicule sans POS depuis le service d'ingestion). Il retourne
-une liste d'anomalies à persister ; l'envoi des alertes est géré séparément par
-services/notification.py.
+Piloté par la base (ForfaitDef) : compatible avec les services ajoutés par le
+gérant. Appelé à la finalisation d'une transaction. Retourne une liste
+d'anomalies à persister ; l'envoi des alertes est géré par notification.py.
 """
 from dataclasses import dataclass
 
-from app.models.enums import AnomalieSeverite, AnomalieType, ForfaitNom, ZoneCode
-from app.services.classification import FORFAIT_ZONES
+from app.models.enums import AnomalieSeverite, AnomalieType, ZoneCode
+from app.services.classification import ForfaitDef, rang
 
 
 @dataclass
@@ -21,15 +20,11 @@ class AnomalieDetectee:
 @dataclass
 class ContexteTransaction:
     """Données nécessaires à l'évaluation des règles."""
-    forfait_paye: ForfaitNom | None       # None => pas de ticket POS
-    forfait_detecte: ForfaitNom | None    # None => aucun véhicule détecté
+    forfait_paye: ForfaitDef | None       # None => pas de ticket POS
+    forfait_detecte: ForfaitDef | None    # None => aucun véhicule détecté
     zones_visitees: set[str]
     duree_totale_min: float | None
     plaque_lue: bool
-
-
-# Ordre de "richesse" des forfaits pour comparer payé vs effectué.
-_RANG = {ForfaitNom.RAPIDE: 1, ForfaitNom.PREMIUM: 2, ForfaitNom.COMPLET: 3}
 
 
 def detecter_anomalies(ctx: ContexteTransaction) -> list[AnomalieDetectee]:
@@ -41,7 +36,7 @@ def detecter_anomalies(ctx: ContexteTransaction) -> list[AnomalieDetectee]:
             AnomalieType.LAVAGE_NON_FACTURE, AnomalieSeverite.HAUTE,
             "Véhicule lavé sans ticket POS associé.",
         ))
-        return anomalies  # rien d'autre à comparer
+        return anomalies
 
     # 2) Ticket POS sans véhicule détecté -> ticket fantôme
     if ctx.forfait_paye is not None and ctx.forfait_detecte is None:
@@ -52,32 +47,30 @@ def detecter_anomalies(ctx: ContexteTransaction) -> list[AnomalieDetectee]:
         return anomalies
 
     if ctx.forfait_paye is not None and ctx.forfait_detecte is not None:
-        # 3) Forfait payé supérieur au forfait effectué -> non respecté
-        if _RANG[ctx.forfait_detecte] < _RANG[ctx.forfait_paye]:
+        # 3) Forfait payé plus « riche » que le forfait effectué -> non respecté
+        if rang(ctx.forfait_detecte) < rang(ctx.forfait_paye):
             anomalies.append(AnomalieDetectee(
                 AnomalieType.FORFAIT_NON_RESPECTE, AnomalieSeverite.CRITIQUE,
-                f"Forfait {ctx.forfait_paye.value} payé mais seul "
-                f"{ctx.forfait_detecte.value} effectué.",
+                f"Forfait {ctx.forfait_paye.nom} payé mais seul "
+                f"{ctx.forfait_detecte.nom} effectué.",
             ))
 
         # 4) Zone requise manquée (ex: aspiration absente pour Premium)
-        zones_manquantes = FORFAIT_ZONES[ctx.forfait_paye] - ctx.zones_visitees
+        zones_manquantes = ctx.forfait_paye.zones_requises - ctx.zones_visitees
         if zones_manquantes:
             libelle = ", ".join(sorted(_nom_zone(z) for z in zones_manquantes))
             anomalies.append(AnomalieDetectee(
                 AnomalieType.FORFAIT_NON_RESPECTE, AnomalieSeverite.CRITIQUE,
-                f"Étape(s) manquante(s) pour {ctx.forfait_paye.value} : {libelle}.",
+                f"Étape(s) manquante(s) pour {ctx.forfait_paye.nom} : {libelle}.",
             ))
 
-        # 5) Durée anormalement courte au regard du forfait payé
-        seuils_min = {ForfaitNom.COMPLET: 10, ForfaitNom.PREMIUM: 20}
-        seuil = seuils_min.get(ctx.forfait_paye)
-        if (seuil is not None and ctx.duree_totale_min is not None
-                and ctx.duree_totale_min < seuil):
+        # 5) Durée anormalement courte au regard du temps minimum du forfait payé
+        if (ctx.duree_totale_min is not None
+                and ctx.duree_totale_min < ctx.forfait_paye.temps_min):
             anomalies.append(AnomalieDetectee(
                 AnomalieType.TEMPS_ANORMAL, AnomalieSeverite.MOYENNE,
                 f"Durée {ctx.duree_totale_min:.0f} min trop courte pour "
-                f"{ctx.forfait_paye.value} (< {seuil} min).",
+                f"{ctx.forfait_paye.nom} (< {ctx.forfait_paye.temps_min} min).",
             ))
 
     # 6) Plaque non lue par l'OCR

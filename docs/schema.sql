@@ -94,6 +94,14 @@ CREATE TABLE rapports_journaliers (
     created_at           TIMESTAMPTZ DEFAULT now()
 );
 
+-- Paramètres configurables (clé-valeur) éditables depuis le dashboard.
+CREATE TABLE parametres (
+    cle         VARCHAR(64) PRIMARY KEY,
+    valeur      TEXT NOT NULL,
+    description TEXT,
+    updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE TABLE utilisateurs (
     id              SERIAL PRIMARY KEY,
     email           VARCHAR(255) UNIQUE NOT NULL,

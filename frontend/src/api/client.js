@@ -55,6 +55,13 @@ export const api = {
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),
   annulerTicket: (id) => request(`/tickets/${id}/annuler`, { method: "POST" }),
+  rapprocherTicket: (id, transactionId) =>
+    request(`/tickets/${id}/rapprocher?transaction_id=${transactionId}`, { method: "POST" }),
+  transactionsNonAppariees: () => request("/transactions?non_apparie=true"),
+  // Paramètres configurables
+  parametres: () => request("/parametres"),
+  modifierParametre: (cle, valeur) =>
+    request(`/parametres/${cle}`, { method: "PUT", body: { valeur } }),
   vehicules: (plaque = "") => request(`/vehicules${plaque ? `?plaque=${plaque}` : ""}`),
   rapports: () => request("/rapports"),
 };

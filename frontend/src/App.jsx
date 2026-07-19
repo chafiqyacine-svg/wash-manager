@@ -9,6 +9,7 @@ import Employees from "./pages/Employees.jsx";
 import History from "./pages/History.jsx";
 import LiveView from "./pages/LiveView.jsx";
 import Login from "./pages/Login.jsx";
+import Rapprochement from "./pages/Rapprochement.jsx";
 import Reports from "./pages/Reports.jsx";
 
 function Protected({ children }) {
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/live" element={<LiveView />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/anomalies" element={<Anomalies />} />
+                <Route path="/rapprochement" element={<Rapprochement />} />
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/config" element={<Config />} />

@@ -7,6 +7,7 @@ const LINKS = [
   { to: "/live", label: "Temps réel" },
   { to: "/history", label: "Historique" },
   { to: "/anomalies", label: "Anomalies" },
+  { to: "/rapprochement", label: "Rapprochement" },
   { to: "/employees", label: "Employés" },
   { to: "/reports", label: "Rapports" },
   { to: "/config", label: "Configuration" },

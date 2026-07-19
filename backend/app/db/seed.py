@@ -11,8 +11,9 @@ from sqlalchemy import select
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import hash_password
-from app.models import Forfait, Utilisateur
+from app.models import Forfait, Parametre, Utilisateur
 from app.models.enums import ForfaitNom, ZoneCode
+from app.services.parametres import DEFAUTS
 
 # Forfaits par défaut (cf. tableau 7.1 du cahier des charges).
 FORFAITS_DEFAUT = [
@@ -35,6 +36,11 @@ def seed() -> None:
             exists = db.scalar(select(Forfait).where(Forfait.nom == f["nom"]))
             if not exists:
                 db.add(Forfait(**f))
+
+        # Paramètres configurables (valeurs par défaut)
+        for cle, (valeur, description) in DEFAUTS.items():
+            if not db.get(Parametre, cle):
+                db.add(Parametre(cle=cle, valeur=valeur, description=description))
 
         # Compte manager par défaut (à changer immédiatement !)
         if not db.scalar(select(Utilisateur).where(Utilisateur.email == "admin@wash.local")):

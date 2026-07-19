@@ -3,6 +3,7 @@ from app.models.anomalie import Anomalie
 from app.models.employe import Employe
 from app.models.enums import AnomalieSeverite, AnomalieType, ForfaitNom, ZoneCode
 from app.models.forfait import Forfait
+from app.models.parametre import Parametre
 from app.models.rapport import RapportJournalier
 from app.models.ticket import Ticket
 from app.models.transaction import Transaction
@@ -13,6 +14,7 @@ __all__ = [
     "Anomalie",
     "Employe",
     "Forfait",
+    "Parametre",
     "RapportJournalier",
     "Ticket",
     "Transaction",

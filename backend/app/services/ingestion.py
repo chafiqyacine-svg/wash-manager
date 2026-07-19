@@ -23,6 +23,7 @@ from app.models.enums import ForfaitNom, ZoneCode
 from app.schemas.event import EventIn, EventType
 from app.services import classification as clf
 from app.services.anomalie import ContexteTransaction, detecter_anomalies
+from app.services.parametres import get_int
 from app.services.reconciliation import (
     InfoTransaction,
     TicketCandidat,
@@ -120,6 +121,19 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
         txn.duree_totale = int((txn.heure_sortie - txn.heure_entree).total_seconds())
     txn.statut = "cloturee"
 
+    # Rapprochement automatique avec la caisse, puis finalisation.
+    ticket = _rapprocher_ticket(db, txn)
+    finaliser_transaction(db, txn, ticket)
+    return txn
+
+
+def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) -> Transaction:
+    """Classe le forfait effectué, applique le ticket (si fourni) et (re)calcule
+    les anomalies.
+
+    Réutilisé par la clôture automatique (_on_sortie) ET le rapprochement manuel.
+    Idempotent : purge d'abord les anomalies existantes de la transaction.
+    """
     # 1) Classification du forfait effectué
     zones = _zones_visitees(txn)
     duree_min = (txn.duree_totale / 60) if txn.duree_totale else None
@@ -127,8 +141,7 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
     forfait_detecte = clf.deduire_forfait_effectue(parcours)
     txn.forfait_detecte = forfait_detecte.value
 
-    # 2) Rapprochement avec la caisse intégrée (ticket -> forfait payé)
-    ticket = _rapprocher_ticket(db, txn)
+    # 2) Application du ticket (forfait payé)
     forfait_paye: ForfaitNom | None = None
     if ticket is not None:
         txn.forfait_id = ticket.forfait_id
@@ -138,8 +151,11 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
         txn.conforme = clf.est_conforme(
             forfait_paye, parcours, temps_min_paye=ticket.forfait.temps_min
         )
+    else:
+        txn.conforme = None
 
-    # 3) Détection + persistance des anomalies
+    # 3) (Re)détection des anomalies — on repart d'une table propre pour cette txn.
+    db.query(Anomalie).filter(Anomalie.transaction_id == txn.id).delete()
     ctx = ContexteTransaction(
         forfait_paye=forfait_paye,
         forfait_detecte=forfait_detecte,
@@ -158,7 +174,6 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
         # TODO(dev): pour severite CRITIQUE/HAUTE, déclencher l'alerte WhatsApp
         #   (services.notification.envoyer_alerte_whatsapp) via une tâche de fond,
         #   puis marquer Anomalie.notifie = True.
-
     return txn
 
 
@@ -179,6 +194,7 @@ def _rapprocher_ticket(db: Session, txn: Transaction) -> Ticket | None:
         InfoTransaction(plaque=plaque, heure_entree=txn.heure_entree,
                         heure_sortie=txn.heure_sortie),
         candidats,
+        fenetre_minutes=get_int(db, "fenetre_rapprochement_minutes", 30),
     )
     if choisi is None:
         return None

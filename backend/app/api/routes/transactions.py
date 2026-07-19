@@ -17,9 +17,16 @@ def lister_transactions(
     db: Session = Depends(get_db),
     limit: int = Query(50, le=200),
     offset: int = 0,
+    non_apparie: bool = False,  # transactions clôturées sans ticket rapproché
     # TODO(dev): ajouter filtres plaque, date, employe_id, conforme, anomalie
 ):
-    stmt = select(Transaction).order_by(Transaction.id.desc()).limit(limit).offset(offset)
+    stmt = select(Transaction).order_by(Transaction.id.desc())
+    if non_apparie:
+        stmt = stmt.where(
+            Transaction.statut == "cloturee",
+            Transaction.forfait_id.is_(None),
+        )
+    stmt = stmt.limit(limit).offset(offset)
     return db.scalars(stmt).all()
 
 

@@ -49,6 +49,10 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Rapprochement caisse ↔ transaction** (plaque puis proximité temporelle) — `services/reconciliation.py`.
 - **Clôture de transaction** : classification + rapprochement + persistance des anomalies — `services/ingestion.py`.
 - **Caisse intégrée** : modèle `tickets`, API `POST/GET/annuler`, page Caisse.
+- **Rapprochement manuel** : `POST /tickets/{id}/rapprocher`, page Rapprochement
+  (associer un ticket ouvert à une transaction non appariée + recalcul anomalies).
+- **Paramètres configurables** (`parametres`) : fenêtre de rapprochement réglable
+  depuis l'écran Configuration.
 - **Géométrie zones/lignes** (franchissement, point-dans-polygone) — `ai/pipeline/zones.py`.
 - Contrat d'événements IA ↔ backend.
 - Squelette d'API (auth JWT, events, dashboard, transactions, anomalies,

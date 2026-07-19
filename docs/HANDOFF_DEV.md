@@ -32,7 +32,6 @@ table `tickets` via un connecteur — le reste ne change pas.
       et les **comparaisons** (vs veille / semaine précédente / moyenne mensuelle).
       (Agrégations + tableau PDF déjà implémentés et testés.)
 - [ ] `services/notification.py` — appel réel WhatsApp Business API.
-- [ ] `api/routes/live.py` — auth WebSocket + diffusion des mises à jour temps réel.
 - [ ] Migrations **Alembic** (remplacer `create_all` de `db/seed.py`).
 - [ ] Durcir l'auth (rôles, expiration, rate-limiting) avant production.
 - [ ] Monter le stockage médias en statique (`app.mount("/media", ...)`).
@@ -72,6 +71,10 @@ table `tickets` via un connecteur — le reste ne change pas.
   fonctionner entièrement à la main en attendant l'installation des caméras.
 - **Paiements** : `GET /payments` (Paid/Pending, totaux, par site). Page Payments
   + panneau « Transactions » sur le dashboard.
+- **Temps réel (WebSocket)** : `/ws/live` authentifié ; le backend diffuse un
+  signal `{"type":"update"}` aux points de mutation (événements IA, file d'attente,
+  tickets). Côté frontend, `LiveProvider` déclenche le re-fetch automatique
+  (dashboard, stations, file, transactions). Validé de bout en bout par test E2E.
 - **Rapport journalier** : agrégations SQL (KPI, répartition, perf employés) +
   génération PDF ReportLab (résumé, forfaits, tableau employés) — testé.
 - **KPI dashboard réels** (`/dashboard/kpi`, `/dashboard/en-cours`).

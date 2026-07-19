@@ -30,6 +30,10 @@ API_PREFIX = "/api/v1"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import asyncio
+
+    # Mémorise la boucle pour la diffusion WebSocket depuis les routes sync.
+    live.manager.set_loop(asyncio.get_running_loop())
     # Démarrage : planifie le rapport journalier.
     scheduler = demarrer_scheduler()
     yield

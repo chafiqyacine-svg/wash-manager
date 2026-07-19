@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import { useLive } from "../context/LiveContext.jsx";
 
 // Queue Management (mode manuel) : file d'attente des tickets payés + lavages
 // en cours. Permet de démarrer un lavage sur une baie et de le terminer —
 // exploitation à la main tant que les caméras ne sont pas installées.
 export default function Queue() {
+  const { version } = useLive();
   const [sites, setSites] = useState([]);
   const [siteId, setSiteId] = useState("");
   const [bays, setBays] = useState([]);
@@ -17,7 +19,7 @@ export default function Queue() {
     api.queue(s).then(setData).catch(() => setData({ en_attente: [], en_cours: [] }));
     api.bays("operational", s).then(setBays).catch(() => setBays([]));
   };
-  useEffect(charger, [siteId]);
+  useEffect(charger, [siteId, version]);
   useEffect(() => { api.sites().then(setSites).catch(() => {}); }, []);
 
   const demarrer = async (ticketId) => {

@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
 from app.models import Bay, Ticket, Transaction, Vehicule
 
@@ -82,6 +83,7 @@ def demarrer(ticket_id: int, bay_id: int, db: Session = Depends(get_db)) -> dict
     db.flush()
     ticket.transaction_id = txn.id  # lien pour la clôture
     db.commit()
+    live_manager.notifier({"type": "update", "source": "queue"})
     return {"transaction_id": txn.id, "bay_id": bay_id}
 
 
@@ -107,4 +109,5 @@ def terminer(transaction_id: int, db: Session = Depends(get_db)) -> dict:
         txn.conforme = True
         ticket.statut = "rapproche"
     db.commit()
+    live_manager.notifier({"type": "update", "source": "queue"})
     return {"transaction_id": txn.id, "statut": txn.statut}

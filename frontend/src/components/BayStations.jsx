@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import { useLive } from "../context/LiveContext.jsx";
 
 // Panneau « Wash Bay Stations » : onglets Operational / Out of service / All
 // + une carte par baie (lavage en cours, file d'attente, temps moyen, staff).
@@ -48,12 +49,13 @@ function BayCard({ bay }) {
 }
 
 export default function BayStations({ siteId }) {
+  const { version } = useLive();
   const [onglet, setOnglet] = useState("operational");
   const [bays, setBays] = useState([]);
 
   useEffect(() => {
     api.bays(onglet, siteId).then(setBays).catch(() => setBays([]));
-  }, [onglet, siteId]);
+  }, [onglet, siteId, version]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5">

@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
 from app.models import Forfait, Ticket, Transaction
 from app.schemas.ticket import TicketCreate, TicketOut
@@ -33,6 +34,7 @@ def creer_ticket(payload: TicketCreate, db: Session = Depends(get_db)) -> Ticket
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+    live_manager.notifier({"type": "update", "source": "ticket"})
     return ticket
 
 

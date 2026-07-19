@@ -6,9 +6,11 @@ import StatCard from "../components/StatCard.jsx";
 import TransactionsCard from "../components/TransactionsCard.jsx";
 import WashDetailsTable from "../components/WashDetailsTable.jsx";
 import { api } from "../api/client.js";
+import { useLive } from "../context/LiveContext.jsx";
 
 // Tableau de bord multi-sites (style « Clean It »).
 export default function Dashboard() {
+  const { version } = useLive();
   const [sites, setSites] = useState([]);
   const [siteId, setSiteId] = useState(""); // "" = tous les sites
   const [apercu, setApercu] = useState(null);
@@ -19,13 +21,13 @@ export default function Dashboard() {
     api.sites().then(setSites).catch(() => setSites([]));
   }, []);
 
+  // Rafraîchi au changement de site ET à chaque signal temps réel (version).
   useEffect(() => {
     const s = siteId || undefined;
     api.apercu(s).then(setApercu).catch(() => setApercu(null));
     api.washDetails(s).then(setWashDetails).catch(() => setWashDetails([]));
     api.graphiques().then(setGraphiques).catch(() => setGraphiques(null));
-    // TODO(dev): WebSocket temps réel pour rafraîchir apercu/bays automatiquement.
-  }, [siteId]);
+  }, [siteId, version]);
 
   const fmt = (v) => (v == null ? "—" : v);
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
+import { useLive } from "../context/LiveContext.jsx";
 
 // Panneau « Transactions » du dashboard : paiements récents (Paid / Pending).
 const BADGE = {
@@ -9,11 +10,12 @@ const BADGE = {
 };
 
 export default function TransactionsCard({ siteId }) {
+  const { version } = useLive();
   const [items, setItems] = useState([]);
 
   useEffect(() => {
     api.payments(siteId).then((d) => setItems(d.items.slice(0, 5))).catch(() => setItems([]));
-  }, [siteId]);
+  }, [siteId, version]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5">

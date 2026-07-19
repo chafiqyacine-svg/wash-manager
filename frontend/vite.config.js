@@ -5,9 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    // Proxy des appels API vers le backend en dev.
+    // Proxy des appels API vers le backend en dev (ws:true pour le WebSocket).
     proxy: {
-      "/api": "http://localhost:8000",
+      "/api": { target: "http://localhost:8000", ws: true },
     },
   },
 });

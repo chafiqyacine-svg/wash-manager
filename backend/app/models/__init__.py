@@ -14,6 +14,7 @@ from app.models.forfait import Forfait
 from app.models.horaire import HoraireEmploye, HoraireSite
 from app.models.parametre import Parametre
 from app.models.pointage import Pointage
+from app.models.produit import Produit
 from app.models.rapport import RapportJournalier
 from app.models.site import Site
 from app.models.ticket import Ticket
@@ -30,6 +31,7 @@ __all__ = [
     "HoraireSite",
     "Parametre",
     "Pointage",
+    "Produit",
     "RapportJournalier",
     "Site",
     "Ticket",

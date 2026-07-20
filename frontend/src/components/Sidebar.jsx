@@ -12,6 +12,7 @@ const MENU = [
   { to: "/pointage", label: "Pointage", icon: "📸" },
   { to: "/presence", label: "Présence", icon: "🕒" },
   { to: "/payments", label: "Payments", icon: "💲" },
+  { to: "/inventory", label: "Inventory", icon: "📦" },
   { to: "/anomalies", label: "Anomalies", icon: "⚠️" },
   { to: "/history", label: "Historique", icon: "🧾" },
   { to: "/reports", label: "Rapports", icon: "📊" },

@@ -20,6 +20,7 @@ from app.api.routes import (
     parametres,
     payments,
     pointage,
+    produits,
     queue,
     rapports,
     sites,
@@ -68,6 +69,7 @@ app.include_router(horaires.router, prefix=API_PREFIX)
 app.include_router(queue.router, prefix=API_PREFIX)
 app.include_router(payments.router, prefix=API_PREFIX)
 app.include_router(pointage.router, prefix=API_PREFIX)
+app.include_router(produits.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(transactions.router, prefix=API_PREFIX)
 app.include_router(vehicules.router, prefix=API_PREFIX)

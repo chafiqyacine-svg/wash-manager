@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, resolve_site
 from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
 from app.models import Bay, Ticket, Transaction, Vehicule
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/queue", tags=["queue"],
 
 
 @router.get("")
-def file_attente(db: Session = Depends(get_db), site_id: int | None = None) -> dict:
+def file_attente(db: Session = Depends(get_db), site_id: int | None = Depends(resolve_site)) -> dict:
     """File d'attente (tickets payés non démarrés) + lavages en cours."""
     en_attente = db.scalars(
         select(Ticket).where(Ticket.statut == "ouvert",

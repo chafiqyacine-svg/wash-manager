@@ -60,6 +60,16 @@ def seed() -> None:
                     db.add(HoraireSite(site_id=site.id, jour=jour,
                                        heure_ouverture=_time(8, 0),
                                        heure_fermeture=_time(20, 0)))
+                # Inventaire de démarrage par site.
+                from app.models import Produit
+                for nom, unite, qte, seuil in [
+                    ("Shampoing carrosserie", "L", 40, 10),
+                    ("Cire", "L", 8, 5),
+                    ("Produit vitres", "L", 15, 5),
+                    ("Microfibres", "unité", 60, 20),
+                ]:
+                    db.add(Produit(site_id=site.id, nom=nom, unite=unite,
+                                   quantite=qte, seuil_alerte=seuil))
 
         # Paramètres configurables (valeurs par défaut)
         for cle, (valeur, description) in DEFAUTS.items():

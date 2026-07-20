@@ -37,3 +37,19 @@ def require_role(*roles: str):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Accès refusé (rôle insuffisant)")
         return user
     return dependance
+
+
+def resolve_site(
+    site_id: int | None = None,
+    user: Utilisateur = Depends(get_current_user),
+) -> int | None:
+    """Résout le site effectif d'une requête (sécurité multi-site).
+
+    - admin (ou compte non rattaché à un site) : le `site_id` demandé passe tel
+      quel (peut tout voir / filtrer librement) ;
+    - manager/caissier rattaché à un site : FORCÉ à son site, quel que soit le
+      `site_id` demandé — il ne peut voir que son emplacement.
+    """
+    if user.role != "admin" and user.site_id is not None:
+        return user.site_id
+    return site_id

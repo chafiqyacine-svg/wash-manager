@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, resolve_site
 from app.core.database import get_db
 from app.models import Anomalie, Bay, Forfait, Ticket, Transaction
 from app.models.enums import StatutLavage, ZoneCode
@@ -92,7 +92,7 @@ def vehicules_en_cours(db: Session = Depends(get_db)) -> list[dict]:
 
 
 @router.get("/apercu")
-def apercu(db: Session = Depends(get_db), site_id: int | None = None) -> dict:
+def apercu(db: Session = Depends(get_db), site_id: int | None = Depends(resolve_site)) -> dict:
     """4 cartes d'en-tête (style « Clean It ») avec évolution vs la veille.
 
     - ongoing  : lavages en cours (instantané)
@@ -140,7 +140,7 @@ def apercu(db: Session = Depends(get_db), site_id: int | None = None) -> dict:
 
 
 @router.get("/wash-details")
-def wash_details(db: Session = Depends(get_db), site_id: int | None = None, limit: int = 12) -> list[dict]:
+def wash_details(db: Session = Depends(get_db), site_id: int | None = Depends(resolve_site), limit: int = 12) -> list[dict]:
     """Tableau « Wash Details » : lavages du jour (véhicule, catégorie, baie,
     statut ontime/delayed, montant)."""
     bay_ids = _bay_ids_du_site(db, site_id)

@@ -78,7 +78,15 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Rôles & accès** : rôles admin / manager / caissier + `site_id` sur l'utilisateur.
   `require_role(...)`, `GET /auth/me`, gestion des utilisateurs admin (`/users`).
   Frontend : menu adapté au rôle, page Utilisateurs (admin), garde de route.
-  TODO(dev) : filtrer les données par `site_id` de l'utilisateur sur chaque endpoint.
+- **Sécurité multi-site (filtrage imposé)** : dépendance `resolve_site` — un
+  manager/caissier rattaché à un site est FORCÉ sur son site, quel que soit le
+  `site_id` demandé (vérifié : un manager demandant un autre site reçoit quand
+  même le sien). Appliquée à dashboard, bays, payments, queue, employés,
+  présence ; la liste des sites est aussi filtrée. TODO(dev) : étendre aux
+  écritures (créer/éditer sur un autre site).
+- **Inventaire** : `produits` (stock par site + seuil d'alerte). Endpoints
+  `/produits` (GET filtrable + sous_seuil, POST, PATCH, mouvement +/-, suppression
+  logique). Page Inventory (ajustement stock, alerte réappro, par site).
 - **Page Employés + classement** : `GET /employes/performance` (véhicules, temps
   moyen, conformité, revenus, score, trié) + écran Employés.
 - **Employés rattachés à un site** : `site_id` sur l'employé ; liste, classement

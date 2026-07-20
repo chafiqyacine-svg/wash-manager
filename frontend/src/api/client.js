@@ -57,6 +57,14 @@ export const api = {
   modifierBay: (id, payload) => request(`/bays/${id}`, { method: "PATCH", body: payload }),
   // Paiements
   payments: (siteId) => request(`/payments${siteId ? `?site_id=${siteId}` : ""}`),
+  // Inventaire
+  produits: (siteId, sousSeuil) =>
+    request(`/produits?${siteId ? `site_id=${siteId}&` : ""}${sousSeuil ? "sous_seuil=true" : ""}`),
+  creerProduit: (payload) => request("/produits", { method: "POST", body: payload }),
+  modifierProduit: (id, payload) => request(`/produits/${id}`, { method: "PATCH", body: payload }),
+  mouvementProduit: (id, delta) =>
+    request(`/produits/${id}/mouvement?delta=${delta}`, { method: "POST" }),
+  supprimerProduit: (id) => request(`/produits/${id}`, { method: "DELETE" }),
   // Queue Management (mode manuel sans caméras)
   queue: (siteId) => request(`/queue${siteId ? `?site_id=${siteId}` : ""}`),
   demarrerLavage: (ticketId, bayId) =>

@@ -137,6 +137,19 @@ CREATE TABLE horaires_employe (
 );
 CREATE INDEX idx_horaires_employe ON horaires_employe(employe_id);
 
+-- Inventaire des consommables (stock par site + seuil d'alerte).
+CREATE TABLE produits (
+    id           SERIAL PRIMARY KEY,
+    site_id      INTEGER REFERENCES sites(id),
+    nom          VARCHAR(128) NOT NULL,
+    unite        VARCHAR(16) DEFAULT 'unité',
+    quantite     NUMERIC(10,2) DEFAULT 0,
+    seuil_alerte NUMERIC(10,2) DEFAULT 0,
+    actif        BOOLEAN DEFAULT TRUE,
+    updated_at   TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_produits_site ON produits(site_id);
+
 -- Paramètres configurables (clé-valeur) éditables depuis le dashboard.
 CREATE TABLE parametres (
     cle         VARCHAR(64) PRIMARY KEY,

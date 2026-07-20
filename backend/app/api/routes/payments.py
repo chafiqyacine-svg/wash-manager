@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, resolve_site
 from app.core.database import get_db
 from app.models import Bay, Forfait, Transaction
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/payments", tags=["payments"],
 @router.get("")
 def lister_paiements(
     db: Session = Depends(get_db),
-    site_id: int | None = None,
+    site_id: int | None = Depends(resolve_site),
     limit: int = 30,
 ) -> dict:
     prix_par_id = {f.id: float(f.prix) for f in db.scalars(select(Forfait)).all()}

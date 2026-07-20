@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, resolve_site
 from app.core.database import get_db
 from app.models import Bay, Forfait, Site, Transaction
 from app.models.enums import BayStatut
@@ -30,7 +30,7 @@ def _aware(dt: datetime | None) -> datetime | None:
 @router.get("")
 def lister_bays(
     db: Session = Depends(get_db),
-    site_id: int | None = None,
+    site_id: int | None = Depends(resolve_site),
     statut: str = Query("all", pattern="^(operational|out_of_service|all)$"),
 ) -> list[dict]:
     stmt = select(Bay).where(Bay.actif.is_(True)).order_by(Bay.numero)

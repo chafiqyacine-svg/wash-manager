@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, resolve_site
 from app.core.database import get_db
 from app.models import Employe, Forfait, Transaction
 from app.schemas.common import EmployeCreate, EmployeOut, EmployeUpdate
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/employes", tags=["employes"],
 
 
 @router.get("", response_model=list[EmployeOut])
-def lister_employes(db: Session = Depends(get_db), site_id: int | None = None):
+def lister_employes(db: Session = Depends(get_db), site_id: int | None = Depends(resolve_site)):
     stmt = select(Employe)
     if site_id:
         stmt = stmt.where(Employe.site_id == site_id)
@@ -49,7 +49,7 @@ def modifier_employe(employe_id: int, payload: EmployeUpdate, db: Session = Depe
 def performance(
     db: Session = Depends(get_db),
     jours: int = 7,
-    site_id: int | None = None,
+    site_id: int | None = Depends(resolve_site),
 ) -> list[dict]:
     """Classement des employés sur une période (véhicules, temps moyen, taux de
     conformité, revenus, score qualité), trié par score décroissant."""
@@ -76,7 +76,7 @@ def performance(
 
 @router.get("/presence")
 def presence(db: Session = Depends(get_db), jour: date | None = None,
-             site_id: int | None = None) -> list[dict]:
+             site_id: int | None = Depends(resolve_site)) -> list[dict]:
     """Présence, ponctualité et productivité des employés pour un jour donné."""
     return presence_du_jour(db, jour or date.today(), site_id)
 

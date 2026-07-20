@@ -24,7 +24,10 @@ export default function RecentEvents() {
           <div key={a.id} className="flex items-start gap-3">
             <span>{ICONE[a.severite] ?? "•"}</span>
             <div className="flex-1">
-              <div className="text-sm font-medium text-slate-700">{a.type}</div>
+              <div className="text-sm font-medium text-slate-700">
+                {a.type}
+                {a.site && <span className="ml-2 text-xs text-slate-400">· 📍 {a.site}</span>}
+              </div>
               <div className="text-xs text-slate-400 line-clamp-1">{a.description}</div>
             </div>
           </div>

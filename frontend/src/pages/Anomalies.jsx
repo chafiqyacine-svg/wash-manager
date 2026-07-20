@@ -33,6 +33,12 @@ export default function Anomalies() {
                 {a.severite}
               </span>
               <span className="ml-2 font-medium">{a.type}</span>
+              {a.site && (
+                <span className="ml-2 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                  📍 {a.site}
+                </span>
+              )}
+              {a.vehicule && <span className="ml-2 text-xs text-slate-400">{a.vehicule}</span>}
               <div className="text-sm text-slate-600">{a.description}</div>
             </div>
             <button onClick={() => resoudre(a.id)} className="text-sm bg-slate-900 text-white px-3 py-1 rounded">

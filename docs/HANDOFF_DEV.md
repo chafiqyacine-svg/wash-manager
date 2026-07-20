@@ -92,6 +92,12 @@ table `tickets` via un connecteur — le reste ne change pas.
   décrémenté automatiquement (`_consommer_produits`). Endpoints
   `GET/PUT /forfaits/{id}/consommation` ; éditeur de recette dans Configuration.
   Vérifié : 8 lavages Premium → 2 unités de cire consommées, isolation par site.
+  La recette peut aussi être saisie directement dans le formulaire « Ajouter un
+  service » (produits + quantité en même temps que le forfait).
+- **Emplacement des anomalies** : chaque anomalie renvoie son site (via la
+  transaction→baie→site, ou l'employé pour les alertes RH) + la plaque ;
+  affiché dans la page Anomalies et Recent Events. Filtré par site pour les
+  utilisateurs rattachés (multi-site).
 - **Page Employés + classement** : `GET /employes/performance` (véhicules, temps
   moyen, conformité, revenus, score, trié) + écran Employés.
 - **Employés rattachés à un site** : `site_id` sur l'employé ; liste, classement

@@ -10,7 +10,7 @@ const ZONES = [
 ];
 
 // Configuration : paramètres réglables (fenêtre de rapprochement) + forfaits.
-const NOUVEAU_VIDE = { nom: "", prix: "", temps_min: "", temps_max: "", zones_requises: ["B"] };
+const NOUVEAU_VIDE = { nom: "", prix: "", temps_min: "", temps_max: "", zones_requises: ["B"], produits: [] };
 
 export default function Config() {
   const [fenetre, setFenetre] = useState("");
@@ -21,11 +21,13 @@ export default function Config() {
   const [sites, setSites] = useState([]);
   const [siteHoraires, setSiteHoraires] = useState("");
   const [horaires, setHoraires] = useState([]);
+  const [produits, setProduits] = useState([]);
 
   const charger = () => {
     api.parametres().then((p) => setFenetre(p.fenetre_rapprochement_minutes ?? "30")).catch(() => {});
     api.forfaits().then(setForfaits).catch(() => {});
     api.sites().then(setSites).catch(() => {});
+    api.produits().then(setProduits).catch(() => {});
   };
   useEffect(charger, []);
 
@@ -47,13 +49,18 @@ export default function Config() {
   const creerService = async () => {
     setMessage("");
     try {
-      await api.creerForfait({
+      const forfait = await api.creerForfait({
         nom: nouveau.nom,
         prix: Number(nouveau.prix),
         temps_min: Number(nouveau.temps_min),
         temps_max: Number(nouveau.temps_max),
         zones_requises: nouveau.zones_requises,
       });
+      // Recette de consommation saisie en même temps que le service.
+      const recette = nouveau.produits
+        .filter((p) => p.produit_id)
+        .map((p) => ({ produit_id: Number(p.produit_id), lavages_par_unite: Number(p.lavages_par_unite) }));
+      if (recette.length) await api.majConsommation(forfait.id, recette);
       setMessage(`Service ${nouveau.nom} créé.`);
       setNouveau(NOUVEAU_VIDE);
       charger();
@@ -61,6 +68,14 @@ export default function Config() {
       setMessage("Erreur lors de la création du service (nom déjà pris ?).");
     }
   };
+
+  // Lignes de produits consommés du nouveau service
+  const ajouterProduitNouveau = () =>
+    setNouveau((n) => ({ ...n, produits: [...n.produits, { produit_id: produits[0]?.id ?? "", lavages_par_unite: 20 }] }));
+  const majProduitNouveau = (i, champ, val) =>
+    setNouveau((n) => ({ ...n, produits: n.produits.map((p, j) => (j === i ? { ...p, [champ]: val } : p)) }));
+  const retirerProduitNouveau = (i) =>
+    setNouveau((n) => ({ ...n, produits: n.produits.filter((_, j) => j !== i) }));
 
   const toggleZoneNouveau = (code) =>
     setNouveau((n) => ({
@@ -238,12 +253,43 @@ export default function Config() {
                 {z.label}
               </label>
             ))}
+          </div>
+
+          {/* Produits consommés par ce service (recette) */}
+          <div className="mt-3 border-t pt-3">
+            <div className="text-sm font-medium text-slate-600 mb-2">Produits consommés</div>
+            <div className="space-y-2">
+              {nouveau.produits.map((p, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <select value={p.produit_id}
+                    onChange={(e) => majProduitNouveau(i, "produit_id", e.target.value)}
+                    className="border rounded px-2 py-1 flex-1">
+                    {produits.map((pr) => (
+                      <option key={pr.id} value={pr.id}>{pr.nom} ({pr.unite})</option>
+                    ))}
+                  </select>
+                  <span className="text-slate-500">1 unité tous les</span>
+                  <input type="number" min="1" value={p.lavages_par_unite}
+                    onChange={(e) => majProduitNouveau(i, "lavages_par_unite", e.target.value)}
+                    className="border rounded px-2 py-1 w-20" />
+                  <span className="text-slate-500">lavages</span>
+                  <button onClick={() => retirerProduitNouveau(i)} className="text-red-600 ml-1">✕</button>
+                </div>
+              ))}
+            </div>
+            <button onClick={ajouterProduitNouveau}
+              className="mt-2 text-sm border rounded px-3 py-1.5" disabled={produits.length === 0}>
+              + Ajouter un produit
+            </button>
+          </div>
+
+          <div className="mt-3 flex">
             <button
               onClick={creerService}
               disabled={!nouveau.nom}
               className="ml-auto bg-slate-900 text-white px-4 py-1.5 rounded disabled:opacity-40"
             >
-              Ajouter
+              Ajouter le service
             </button>
           </div>
         </div>

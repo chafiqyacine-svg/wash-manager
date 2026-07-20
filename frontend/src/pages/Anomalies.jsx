@@ -13,7 +13,9 @@ export default function Anomalies() {
   const [items, setItems] = useState([]);
 
   const charger = () => api.anomalies("?resolu=false").then(setItems).catch(() => setItems([]));
-  useEffect(charger, []);
+  // Ne pas passer `charger` directement : il renvoie une Promise, que React
+  // prendrait pour une fonction de nettoyage.
+  useEffect(() => { charger(); }, []);
 
   const resoudre = async (id) => {
     await api.resoudreAnomalie(id);

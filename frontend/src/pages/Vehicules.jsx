@@ -7,7 +7,7 @@ export default function Vehicules() {
   const [q, setQ] = useState("");
 
   const charger = () => api.vehicules(q).then(setVehicules).catch(() => setVehicules([]));
-  useEffect(charger, []);
+  useEffect(() => { charger(); }, []); // charger renvoie une Promise -> ne pas la passer directement
 
   return (
     <div>

@@ -178,21 +178,26 @@ def wash_details(db: Session = Depends(get_db), site_id: int | None = Depends(re
 
 
 @router.get("/graphiques")
-def donnees_graphiques(db: Session = Depends(get_db)) -> dict:
+def donnees_graphiques(db: Session = Depends(get_db),
+                       site_id: int | None = Depends(resolve_site)) -> dict:
     """Séries prêtes pour les graphiques : volume horaire, répartition des
-    forfaits (jour) et tendance sur 7 jours (véhicules + CA)."""
+    forfaits (jour) et tendance sur 7 jours (véhicules + CA). Filtré par site."""
     debut_jour = datetime.combine(date.today(), time.min)
     fin_jour = debut_jour + timedelta(days=1)
     prix = {f.id: float(f.prix) for f in db.scalars(select(Forfait)).all()}
+    bay_ids = _bay_ids_du_site(db, site_id)
+
+    def _scope(stmt):
+        return stmt.where(Transaction.bay_id.in_(bay_ids)) if bay_ids is not None else stmt
 
     # Transactions du jour (clôturées)
-    txns_jour = db.scalars(
+    txns_jour = db.scalars(_scope(
         select(Transaction).where(
             Transaction.statut == "cloturee",
             Transaction.heure_sortie >= debut_jour,
             Transaction.heure_sortie < fin_jour,
         )
-    ).all()
+    )).all()
 
     # Volume par heure (0-23)
     heures = Counter(t.heure_entree.hour for t in txns_jour if t.heure_entree)
@@ -208,13 +213,13 @@ def donnees_graphiques(db: Session = Depends(get_db)) -> dict:
         jour = date.today() - timedelta(days=d)
         db0 = datetime.combine(jour, time.min)
         df = db0 + timedelta(days=1)
-        txns = db.scalars(
+        txns = db.scalars(_scope(
             select(Transaction).where(
                 Transaction.statut == "cloturee",
                 Transaction.heure_sortie >= db0,
                 Transaction.heure_sortie < df,
             )
-        ).all()
+        )).all()
         ca = sum(prix.get(t.forfait_id, 0.0) for t in txns if t.forfait_id)
         tendance.append({
             "date": jour.strftime("%d/%m"),

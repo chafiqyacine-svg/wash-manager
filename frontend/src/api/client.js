@@ -45,7 +45,7 @@ export const api = {
   // Endpoints (TODO(dev): consommer dans les pages correspondantes)
   kpi: () => request("/dashboard/kpi"),
   enCours: () => request("/dashboard/en-cours"),
-  graphiques: () => request("/dashboard/graphiques"),
+  graphiques: (siteId) => request(`/dashboard/graphiques${siteId ? `?site_id=${siteId}` : ""}`),
   apercu: (siteId) => request(`/dashboard/apercu${siteId ? `?site_id=${siteId}` : ""}`),
   washDetails: (siteId) => request(`/dashboard/wash-details${siteId ? `?site_id=${siteId}` : ""}`),
   // Multi-sites & baies

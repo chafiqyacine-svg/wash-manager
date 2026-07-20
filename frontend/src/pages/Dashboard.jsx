@@ -26,7 +26,7 @@ export default function Dashboard() {
     const s = siteId || undefined;
     api.apercu(s).then(setApercu).catch(() => setApercu(null));
     api.washDetails(s).then(setWashDetails).catch(() => setWashDetails([]));
-    api.graphiques().then(setGraphiques).catch(() => setGraphiques(null));
+    api.graphiques(s).then(setGraphiques).catch(() => setGraphiques(null));
   }, [siteId, version]);
 
   const fmt = (v) => (v == null ? "—" : v);

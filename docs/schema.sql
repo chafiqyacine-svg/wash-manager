@@ -71,6 +71,7 @@ CREATE TABLE transactions (
     photo_entree    VARCHAR(512),
     photo_sortie    VARCHAR(512),
     statut          VARCHAR(16) DEFAULT 'en_cours',
+    inventaire_consomme BOOLEAN DEFAULT FALSE,   -- anti-double consommation stock
     created_at      TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX idx_transactions_track ON transactions(track_id);

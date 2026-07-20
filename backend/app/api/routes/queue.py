@@ -19,6 +19,7 @@ from app.api.deps import get_current_user, resolve_site
 from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
 from app.models import Bay, Ticket, Transaction, Vehicule
+from app.services.ingestion import consommer_inventaire
 
 router = APIRouter(prefix="/queue", tags=["queue"],
                    dependencies=[Depends(get_current_user)])
@@ -108,6 +109,8 @@ def terminer(transaction_id: int, db: Session = Depends(get_db)) -> dict:
         txn.forfait_detecte = ticket.forfait.nom
         txn.conforme = True
         ticket.statut = "rapproche"
+    # Consommation d'inventaire (idempotente) — comme en mode caméra.
+    consommer_inventaire(db, txn)
     db.commit()
     live_manager.notifier({"type": "update", "source": "queue"})
     return {"transaction_id": txn.id, "statut": txn.statut}

@@ -142,7 +142,13 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
     txn.heure_sortie = event.timestamp
     txn.photo_sortie = event.photo or txn.photo_sortie
     if txn.heure_entree:
-        txn.duree_totale = int((txn.heure_sortie - txn.heure_entree).total_seconds())
+        # Normalise les fuseaux (SQLite stocke des datetimes naïfs).
+        entree, sortie = txn.heure_entree, txn.heure_sortie
+        if entree.tzinfo is None and sortie.tzinfo is not None:
+            entree = entree.replace(tzinfo=sortie.tzinfo)
+        elif sortie.tzinfo is None and entree.tzinfo is not None:
+            sortie = sortie.replace(tzinfo=entree.tzinfo)
+        txn.duree_totale = int((sortie - entree).total_seconds())
     txn.statut = "cloturee"
 
     # Rapprochement automatique avec la caisse, puis finalisation.
@@ -222,6 +228,12 @@ def _consommer_produits(db: Session, txn: Transaction, forfait_detecte) -> None:
     situés au site du lavage (via la baie) ; si le lavage n'a pas de baie, tous
     les produits de la recette sont concernés.
     """
+    # Idempotence : ne consommer qu'une seule fois par transaction (évite le
+    # double décrément si finaliser_transaction est rappelée, ex. rapprochement
+    # manuel).
+    if txn.inventaire_consomme:
+        return
+
     # Forfait effectif : le forfait facturé sinon celui détecté.
     forfait_id = txn.forfait_id
     if forfait_id is None and forfait_detecte is not None:
@@ -247,6 +259,14 @@ def _consommer_produits(db: Session, txn: Transaction, forfait_detecte) -> None:
             continue
         produit.quantite = max(0, float(produit.quantite) - 1 / ligne.lavages_par_unite)
         # TODO(dev): si produit.quantite <= seuil_alerte -> alerte réappro.
+
+    txn.inventaire_consomme = True
+
+
+def consommer_inventaire(db: Session, txn: Transaction) -> None:
+    """Point d'entrée public : consomme l'inventaire d'un lavage clôturé
+    (mode manuel via la file d'attente). Idempotent."""
+    _consommer_produits(db, txn, None)
 
 
 def _hors_horaires_ouverture(db: Session, txn: Transaction) -> bool:

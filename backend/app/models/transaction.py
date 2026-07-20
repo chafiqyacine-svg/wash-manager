@@ -62,6 +62,8 @@ class Transaction(Base):
     # État de la transaction : "en_cours" tant que le véhicule est sur site,
     # "cloturee" après franchissement de la ligne de sortie.
     statut: Mapped[str] = mapped_column(String(16), default="en_cours", index=True)
+    # Garde d'idempotence : l'inventaire n'est consommé qu'une seule fois.
+    inventaire_consomme: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

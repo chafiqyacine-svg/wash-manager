@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, resolve_site
+from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
 from app.models import Bay, Forfait, Site, Transaction
 from app.models.enums import BayStatut
@@ -120,6 +121,7 @@ def creer_bay(payload: BayCreate, db: Session = Depends(get_db)) -> dict:
     db.add(bay)
     db.commit()
     db.refresh(bay)
+    live_manager.notifier({"type": "update", "source": "bay"})
     return {"id": bay.id, "numero": bay.numero, "site_id": bay.site_id}
 
 
@@ -136,4 +138,5 @@ def modifier_bay(bay_id: int, payload: BayUpdate, db: Session = Depends(get_db))
     if payload.staff is not None:
         bay.staff = payload.staff
     db.commit()
+    live_manager.notifier({"type": "update", "source": "bay"})
     return {"id": bay.id, "statut": bay.statut, "staff": bay.staff}

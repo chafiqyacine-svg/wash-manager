@@ -54,6 +54,7 @@ def annuler_ticket(ticket_id: int, db: Session = Depends(get_db)) -> Ticket:
     ticket.statut = "annule"
     db.commit()
     db.refresh(ticket)
+    live_manager.notifier({"type": "update", "source": "ticket"})
     return ticket
 
 
@@ -76,4 +77,5 @@ def rapprocher_manuellement(
     finaliser_transaction(db, txn, ticket)
     db.commit()
     db.refresh(ticket)
+    live_manager.notifier({"type": "update", "source": "ticket"})
     return ticket

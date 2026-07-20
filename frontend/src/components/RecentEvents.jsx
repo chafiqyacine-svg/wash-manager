@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import { useLive } from "../context/LiveContext.jsx";
 
 // « Recent Events » : basé sur les anomalies récentes (proxy d'événements).
 const ICONE = {
@@ -10,11 +11,13 @@ const ICONE = {
 };
 
 export default function RecentEvents() {
+  const { version } = useLive();
   const [items, setItems] = useState([]);
 
+  // Se rafraîchit à chaque signal temps réel (nouvelle anomalie / alerte).
   useEffect(() => {
     api.anomalies().then((a) => setItems(a.slice(0, 6))).catch(() => setItems([]));
-  }, []);
+  }, [version]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-5">

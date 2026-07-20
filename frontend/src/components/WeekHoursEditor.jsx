@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Éditeur d'horaires hebdomadaire réutilisable.
 // `champs` = ["heure_ouverture","heure_fermeture"] (site) ou ["debut","fin"] (employé).
@@ -7,20 +7,26 @@ const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dim
 // Convertit "HH:MM:SS" -> "HH:MM" pour l'input time, et inversement à l'envoi.
 const court = (t) => (t ? t.slice(0, 5) : "");
 
+function construire(initial, a, b, defaut) {
+  const m = {};
+  for (let j = 0; j < 7; j++) {
+    const ex = initial.find((h) => h.jour === j);
+    m[j] = ex
+      ? { actif: true, a: court(ex[a]), b: court(ex[b]) }
+      : { actif: false, a: defaut.a, b: defaut.b };
+  }
+  return m;
+}
+
 export default function WeekHoursEditor({ initial = [], champs, defaut, onSave }) {
   const [a, b] = champs;
-  // État : map jour -> { actif, a, b }
-  const [semaine, setSemaine] = useState(() => {
-    const m = {};
-    for (let j = 0; j < 7; j++) {
-      const ex = initial.find((h) => h.jour === j);
-      m[j] = ex
-        ? { actif: true, a: court(ex[a]), b: court(ex[b]) }
-        : { actif: false, a: defaut.a, b: defaut.b };
-    }
-    return m;
-  });
+  const [semaine, setSemaine] = useState(() => construire(initial, a, b, defaut));
   const [message, setMessage] = useState("");
+
+  // Resynchronise quand les horaires chargés (async) arrivent/changent.
+  useEffect(() => {
+    setSemaine(construire(initial, a, b, defaut));
+  }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (j, key, val) => setSemaine((s) => ({ ...s, [j]: { ...s[j], [key]: val } }));
 

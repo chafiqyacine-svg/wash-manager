@@ -43,8 +43,11 @@ def seed() -> None:
             if not exists:
                 db.add(Forfait(**f))
 
-        # Sites + baies (multi-emplacements)
+        # Sites + baies (multi-emplacements) + horaires d'ouverture par défaut
         if not db.scalar(select(Site)):
+            from datetime import time as _time
+
+            from app.models import HoraireSite
             for s in SITES_DEFAUT:
                 site = Site(nom=s["nom"], adresse=s["adresse"])
                 db.add(site)
@@ -52,6 +55,11 @@ def seed() -> None:
                 for n in range(1, s["bays"] + 1):
                     db.add(Bay(site_id=site.id, numero=n,
                                statut=BayStatut.OPERATIONNELLE.value, staff=3))
+                # Ouvert 8h-20h du lundi (0) au samedi (5).
+                for jour in range(0, 6):
+                    db.add(HoraireSite(site_id=site.id, jour=jour,
+                                       heure_ouverture=_time(8, 0),
+                                       heure_fermeture=_time(20, 0)))
 
         # Paramètres configurables (valeurs par défaut)
         for cle, (valeur, description) in DEFAUTS.items():

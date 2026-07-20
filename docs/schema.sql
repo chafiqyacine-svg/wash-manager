@@ -117,6 +117,26 @@ CREATE TABLE rapports_journaliers (
     created_at           TIMESTAMPTZ DEFAULT now()
 );
 
+-- Horaires d'ouverture des sites (0=lundi … 6=dimanche).
+CREATE TABLE horaires_site (
+    id              SERIAL PRIMARY KEY,
+    site_id         INTEGER NOT NULL REFERENCES sites(id),
+    jour            INTEGER NOT NULL,
+    heure_ouverture TIME NOT NULL,
+    heure_fermeture TIME NOT NULL
+);
+CREATE INDEX idx_horaires_site ON horaires_site(site_id);
+
+-- Créneaux de travail des employés (0=lundi … 6=dimanche).
+CREATE TABLE horaires_employe (
+    id         SERIAL PRIMARY KEY,
+    employe_id INTEGER NOT NULL REFERENCES employes(id),
+    jour       INTEGER NOT NULL,
+    debut      TIME NOT NULL,
+    fin        TIME NOT NULL
+);
+CREATE INDEX idx_horaires_employe ON horaires_employe(employe_id);
+
 -- Paramètres configurables (clé-valeur) éditables depuis le dashboard.
 CREATE TABLE parametres (
     cle         VARCHAR(64) PRIMARY KEY,

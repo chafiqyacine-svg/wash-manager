@@ -84,6 +84,13 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Employés rattachés à un site** : `site_id` sur l'employé ; liste, classement
   et effectif filtrables par site ; affectation modifiable depuis l'écran Employés
   (`POST /employes`, `PATCH /employes/{id}`).
+- **Identification par badge NFC** : `_on_badge` résout l'employé via `badge_nfc_id`
+  et le relie à la transaction (identification déterministe, sans IA).
+- **Horaires** : ouverture des sites (`GET/PUT /sites/{id}/horaires`) et créneaux
+  de travail des employés (`GET/PUT /employes/{id}/horaires`), éditables via un
+  éditeur hebdomadaire (Config = ouverture ; Employés = travail).
+  TODO(dev) : exploiter les horaires pour présence/ponctualité/temps mort et
+  l'anomalie « lavage hors horaires d'ouverture ».
 - **Mode test vidéo (IA)** : `Detector` (ultralytics) et `CameraStream` (RTSP ou
   fichier) fonctionnels + `ai/detect_video.py` — teste la détection de véhicules
   sur une vidéo avec YOLO pré-entraîné, sans caméras installées.

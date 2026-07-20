@@ -12,6 +12,7 @@ from app.api.routes import (
     employes,
     events,
     forfaits,
+    horaires,
     live,
     parametres,
     payments,
@@ -59,6 +60,7 @@ app.include_router(events.router, prefix=API_PREFIX)
 app.include_router(tickets.router, prefix=API_PREFIX)
 app.include_router(sites.router, prefix=API_PREFIX)
 app.include_router(bays.router, prefix=API_PREFIX)
+app.include_router(horaires.router, prefix=API_PREFIX)
 app.include_router(queue.router, prefix=API_PREFIX)
 app.include_router(payments.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)

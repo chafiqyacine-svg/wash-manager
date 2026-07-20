@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import WeekHoursEditor from "../components/WeekHoursEditor.jsx";
 
 // Employés : effectif par site (affectation) + classement de performance.
 export default function Employees() {
@@ -8,6 +9,9 @@ export default function Employees() {
   const [jours, setJours] = useState(7);
   const [employes, setEmployes] = useState([]);
   const [perf, setPerf] = useState([]);
+  // Édition des horaires de travail d'un employé
+  const [empHoraire, setEmpHoraire] = useState(null);   // employé sélectionné
+  const [horaires, setHoraires] = useState([]);
 
   useEffect(() => { api.sites().then(setSites).catch(() => {}); }, []);
 
@@ -23,6 +27,11 @@ export default function Employees() {
   const affecter = async (empId, newSiteId) => {
     await api.modifierEmploye(empId, { site_id: newSiteId ? Number(newSiteId) : null }).catch(() => {});
     charger();
+  };
+
+  const ouvrirHoraires = (emp) => {
+    setEmpHoraire(emp);
+    api.horairesEmploye(emp.id).then(setHoraires).catch(() => setHoraires([]));
   };
 
   const medaille = (i) => ["🥇", "🥈", "🥉"][i] ?? `${i + 1}.`;
@@ -55,6 +64,7 @@ export default function Employees() {
               <th className="p-3 font-medium">Badge</th>
               <th className="p-3 font-medium">Site d'affectation</th>
               <th className="p-3 font-medium">Actif</th>
+              <th className="p-3 font-medium">Horaires</th>
             </tr>
           </thead>
           <tbody>
@@ -74,14 +84,36 @@ export default function Employees() {
                     {e.actif ? "Actif" : "Inactif"}
                   </span>
                 </td>
+                <td className="p-3">
+                  <button onClick={() => ouvrirHoraires(e)} className="text-sm text-blue-600">
+                    Éditer
+                  </button>
+                </td>
               </tr>
             ))}
             {employes.length === 0 && (
-              <tr><td className="p-3 text-slate-400" colSpan={4}>Aucun employé.</td></tr>
+              <tr><td className="p-3 text-slate-400" colSpan={5}>Aucun employé.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Éditeur d'horaires de travail de l'employé sélectionné */}
+      {empHoraire && (
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-4 max-w-xl">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-slate-800">Horaires — {empHoraire.nom}</h2>
+            <button onClick={() => setEmpHoraire(null)} className="text-sm text-slate-400">Fermer</button>
+          </div>
+          <WeekHoursEditor
+            key={empHoraire.id}
+            initial={horaires}
+            champs={["debut", "fin"]}
+            defaut={{ a: "08:00", b: "16:00" }}
+            onSave={(h) => api.majHorairesEmploye(empHoraire.id, h)}
+          />
+        </div>
+      )}
 
       {/* Classement de performance */}
       <h2 className="font-semibold text-slate-800 mb-2">Classement</h2>

@@ -71,6 +71,13 @@ export const api = {
   modifierEmploye: (id, payload) => request(`/employes/${id}`, { method: "PATCH", body: payload }),
   employePerformance: (jours = 7, siteId) =>
     request(`/employes/performance?jours=${jours}${siteId ? `&site_id=${siteId}` : ""}`),
+  // Horaires (ouverture site + travail employé)
+  horairesSite: (siteId) => request(`/sites/${siteId}/horaires`),
+  majHorairesSite: (siteId, horaires) =>
+    request(`/sites/${siteId}/horaires`, { method: "PUT", body: horaires }),
+  horairesEmploye: (empId) => request(`/employes/${empId}/horaires`),
+  majHorairesEmploye: (empId, horaires) =>
+    request(`/employes/${empId}/horaires`, { method: "PUT", body: horaires }),
   // Profil & utilisateurs (admin)
   me: () => request("/auth/me"),
   users: () => request("/users"),

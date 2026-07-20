@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import WeekHoursEditor from "../components/WeekHoursEditor.jsx";
 
 const ZONES = [
   { code: "B", label: "Lavage ext." },
@@ -15,12 +16,21 @@ export default function Config() {
   const [forfaits, setForfaits] = useState([]);
   const [nouveau, setNouveau] = useState(NOUVEAU_VIDE);
   const [message, setMessage] = useState("");
+  // Horaires d'ouverture
+  const [sites, setSites] = useState([]);
+  const [siteHoraires, setSiteHoraires] = useState("");
+  const [horaires, setHoraires] = useState([]);
 
   const charger = () => {
     api.parametres().then((p) => setFenetre(p.fenetre_rapprochement_minutes ?? "30")).catch(() => {});
     api.forfaits().then(setForfaits).catch(() => {});
+    api.sites().then(setSites).catch(() => {});
   };
   useEffect(charger, []);
+
+  useEffect(() => {
+    if (siteHoraires) api.horairesSite(siteHoraires).then(setHoraires).catch(() => setHoraires([]));
+  }, [siteHoraires]);
 
   const supprimerForfait = async (f) => {
     setMessage("");
@@ -236,6 +246,29 @@ export default function Config() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Horaires d'ouverture par site */}
+      <div className="bg-white rounded-2xl shadow-sm p-4 mt-6 max-w-xl">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-slate-800">Horaires d'ouverture</h2>
+          <select value={siteHoraires} onChange={(e) => setSiteHoraires(e.target.value)}
+            className="border rounded-lg px-3 py-1.5 text-sm">
+            <option value="">Choisir un site…</option>
+            {sites.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+          </select>
+        </div>
+        {siteHoraires ? (
+          <WeekHoursEditor
+            key={siteHoraires}
+            initial={horaires}
+            champs={["heure_ouverture", "heure_fermeture"]}
+            defaut={{ a: "08:00", b: "20:00" }}
+            onSave={(h) => api.majHorairesSite(siteHoraires, h)}
+          />
+        ) : (
+          <div className="text-slate-400 text-sm">Sélectionnez un site pour éditer ses horaires.</div>
+        )}
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ from datetime import date, datetime, time
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Anomalie, Forfait, Ticket, Transaction, Vehicule
+from app.models import Anomalie, Employe, Forfait, Ticket, Transaction, Vehicule
 from app.models.enums import ZoneCode
 from app.schemas.event import EventIn, EventType
 from app.services import classification as clf
@@ -102,11 +102,16 @@ def _on_zone_exit(db: Session, event: EventIn) -> Transaction | None:
 
 
 def _on_badge(db: Session, event: EventIn) -> Transaction | None:
+    """Identifie l'employé à partir de son badge NFC et le relie à la transaction."""
     txn = _get_transaction_active(db, event.track_id)
     if txn is None or not event.badge_nfc_id:
         return txn
-    # TODO(dev): résoudre l'employé à partir du badge NFC (table employes)
-    #   et affecter txn.employe_id. Gérer le cas badge inconnu.
+    employe = db.scalar(
+        select(Employe).where(Employe.badge_nfc_id == event.badge_nfc_id)
+    )
+    if employe is not None:
+        txn.employe_id = employe.id
+    # TODO(dev): badge inconnu -> journaliser / lever une anomalie de badge.
     return txn
 
 

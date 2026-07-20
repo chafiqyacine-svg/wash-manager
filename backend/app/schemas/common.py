@@ -52,6 +52,7 @@ class ForfaitCreate(ForfaitBase):
 class EmployeBase(BaseModel):
     nom: str
     badge_nfc_id: str | None = None
+    couleur_gilet: str | None = None
     date_embauche: date | None = None
     site_id: int | None = None
     actif: bool = True
@@ -68,6 +69,7 @@ class EmployeCreate(EmployeBase):
 class EmployeUpdate(BaseModel):
     nom: str | None = None
     badge_nfc_id: str | None = None
+    couleur_gilet: str | None = None
     site_id: int | None = None
     actif: bool | None = None
 

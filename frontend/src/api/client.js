@@ -71,6 +71,20 @@ export const api = {
   modifierEmploye: (id, payload) => request(`/employes/${id}`, { method: "PATCH", body: payload }),
   employePerformance: (jours = 7, siteId) =>
     request(`/employes/performance?jours=${jours}${siteId ? `&site_id=${siteId}` : ""}`),
+  // Pointage (selfie horodaté par le serveur)
+  pointages: () => request("/pointage"),
+  async pointer(employeId, type, blob) {
+    const form = new FormData();
+    form.append("employe_id", employeId);
+    form.append("type", type);
+    form.append("selfie", blob, "selfie.jpg");
+    const headers = {};
+    const t = localStorage.getItem("token");
+    if (t) headers["Authorization"] = `Bearer ${t}`;
+    const res = await fetch(`${BASE}/pointage`, { method: "POST", headers, body: form });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    return res.json();
+  },
   // Horaires (ouverture site + travail employé)
   horairesSite: (siteId) => request(`/sites/${siteId}/horaires`),
   majHorairesSite: (siteId, horaires) =>

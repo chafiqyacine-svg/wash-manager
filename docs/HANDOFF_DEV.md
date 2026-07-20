@@ -84,8 +84,14 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Employés rattachés à un site** : `site_id` sur l'employé ; liste, classement
   et effectif filtrables par site ; affectation modifiable depuis l'écran Employés
   (`POST /employes`, `PATCH /employes/{id}`).
-- **Identification par badge NFC** : `_on_badge` résout l'employé via `badge_nfc_id`
-  et le relie à la transaction (identification déterministe, sans IA).
+- **Identification employé** : par **badge NFC** (`badge_nfc_id`) OU par **couleur
+  de gilet** (`couleur_gilet`) — `_on_badge` résout l'employé selon le champ fourni.
+  Vision : `ai/pipeline/vest.py` (couleur dominante du torse + matching de couleur,
+  testé) émet `EventIn.couleur_gilet`.
+- **Pointage (selfie horodaté)** : `POST /pointage` (multipart selfie) enregistre
+  l'HEURE SERVEUR (autoritaire, anti-antidatage) + filigrane horaire sur l'image
+  (Pillow). Page Pointage : capture caméra en direct (getUserMedia) + historique.
+  Médias servis via `/media` (StaticFiles).
 - **Horaires** : ouverture des sites (`GET/PUT /sites/{id}/horaires`) et créneaux
   de travail des employés (`GET/PUT /employes/{id}/horaires`), éditables via un
   éditeur hebdomadaire (Config = ouverture ; Employés = travail).

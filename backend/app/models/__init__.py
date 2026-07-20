@@ -13,6 +13,7 @@ from app.models.enums import (
 from app.models.forfait import Forfait
 from app.models.horaire import HoraireEmploye, HoraireSite
 from app.models.parametre import Parametre
+from app.models.pointage import Pointage
 from app.models.rapport import RapportJournalier
 from app.models.site import Site
 from app.models.ticket import Ticket
@@ -28,6 +29,7 @@ __all__ = [
     "HoraireEmploye",
     "HoraireSite",
     "Parametre",
+    "Pointage",
     "RapportJournalier",
     "Site",
     "Ticket",

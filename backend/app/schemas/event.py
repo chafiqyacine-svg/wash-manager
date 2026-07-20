@@ -34,6 +34,7 @@ class EventIn(BaseModel):
     plaque: str | None = Field(None, description="Plaque lue (type=plaque)")
     plaque_confiance: float | None = Field(None, description="Score OCR 0-1")
     badge_nfc_id: str | None = Field(None, description="Badge employé (type=badge)")
+    couleur_gilet: str | None = Field(None, description="Couleur de gilet détectée (hex)")
     photo: str | None = Field(None, description="Chemin/URL de la capture associée")
 
     # Champ libre pour extensions (ex: bbox, vitesse…) sans casser le contrat

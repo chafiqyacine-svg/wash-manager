@@ -9,6 +9,7 @@ const MENU = [
   { to: "/vehicules", label: "Customer Management", icon: "👥" },
   { to: "/bays", label: "Bay Management", icon: "🅿️" },
   { to: "/employees", label: "Employés", icon: "🧑‍🔧" },
+  { to: "/pointage", label: "Pointage", icon: "📸" },
   { to: "/payments", label: "Payments", icon: "💲" },
   { to: "/anomalies", label: "Anomalies", icon: "⚠️" },
   { to: "/history", label: "Historique", icon: "🧾" },

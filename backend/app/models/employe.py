@@ -13,6 +13,8 @@ class Employe(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     nom: Mapped[str] = mapped_column(String(128))
     badge_nfc_id: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
+    # Couleur de gilet (hex, ex "#E11D48") pour l'identification par vision.
+    couleur_gilet: Mapped[str | None] = mapped_column(String(9))
     date_embauche: Mapped[date | None] = mapped_column(Date)
     # Emplacement d'affectation (NULL = non affecté / polyvalent).
     site_id: Mapped[int | None] = mapped_column(ForeignKey("sites.id"), index=True)

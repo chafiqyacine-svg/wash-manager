@@ -29,6 +29,11 @@ export default function Employees() {
     charger();
   };
 
+  const changerCouleur = async (empId, couleur) => {
+    await api.modifierEmploye(empId, { couleur_gilet: couleur }).catch(() => {});
+    charger();
+  };
+
   const ouvrirHoraires = (emp) => {
     setEmpHoraire(emp);
     api.horairesEmploye(emp.id).then(setHoraires).catch(() => setHoraires([]));
@@ -62,6 +67,7 @@ export default function Employees() {
             <tr>
               <th className="p-3 font-medium">Employé</th>
               <th className="p-3 font-medium">Badge</th>
+              <th className="p-3 font-medium">Gilet</th>
               <th className="p-3 font-medium">Site d'affectation</th>
               <th className="p-3 font-medium">Actif</th>
               <th className="p-3 font-medium">Horaires</th>
@@ -72,6 +78,11 @@ export default function Employees() {
               <tr key={e.id} className="border-t border-slate-100">
                 <td className="p-3 font-medium text-slate-700">{e.nom}</td>
                 <td className="p-3 text-slate-500">{e.badge_nfc_id ?? "—"}</td>
+                <td className="p-3">
+                  <input type="color" value={e.couleur_gilet ?? "#888888"}
+                    onChange={(ev) => changerCouleur(e.id, ev.target.value)}
+                    title="Couleur de gilet" className="w-8 h-8 rounded cursor-pointer" />
+                </td>
                 <td className="p-3">
                   <select value={e.site_id ?? ""} onChange={(ev) => affecter(e.id, ev.target.value)}
                     className="border rounded px-2 py-1">
@@ -92,7 +103,7 @@ export default function Employees() {
               </tr>
             ))}
             {employes.length === 0 && (
-              <tr><td className="p-3 text-slate-400" colSpan={5}>Aucun employé.</td></tr>
+              <tr><td className="p-3 text-slate-400" colSpan={6}>Aucun employé.</td></tr>
             )}
           </tbody>
         </table>

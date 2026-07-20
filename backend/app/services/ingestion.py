@@ -102,16 +102,24 @@ def _on_zone_exit(db: Session, event: EventIn) -> Transaction | None:
 
 
 def _on_badge(db: Session, event: EventIn) -> Transaction | None:
-    """Identifie l'employé à partir de son badge NFC et le relie à la transaction."""
+    """Identifie l'employé et le relie à la transaction.
+
+    Deux mécanismes acceptés :
+      - badge NFC (`badge_nfc_id`) — déterministe ;
+      - couleur de gilet (`couleur_gilet`) détectée par vision — le pipeline
+        envoie la couleur, on la rapproche de l'employé correspondant.
+    """
     txn = _get_transaction_active(db, event.track_id)
-    if txn is None or not event.badge_nfc_id:
+    if txn is None:
         return txn
-    employe = db.scalar(
-        select(Employe).where(Employe.badge_nfc_id == event.badge_nfc_id)
-    )
+    employe = None
+    if event.badge_nfc_id:
+        employe = db.scalar(select(Employe).where(Employe.badge_nfc_id == event.badge_nfc_id))
+    elif event.couleur_gilet:
+        employe = db.scalar(select(Employe).where(Employe.couleur_gilet == event.couleur_gilet))
     if employe is not None:
         txn.employe_id = employe.id
-    # TODO(dev): badge inconnu -> journaliser / lever une anomalie de badge.
+    # TODO(dev): identification inconnue -> journaliser / anomalie d'identification.
     return txn
 
 

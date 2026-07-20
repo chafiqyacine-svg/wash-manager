@@ -1,8 +1,11 @@
 """Point d'entrée de l'API FastAPI — monte les routes et le scheduler."""
 from contextlib import asynccontextmanager
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
     anomalies,
@@ -16,6 +19,7 @@ from app.api.routes import (
     live,
     parametres,
     payments,
+    pointage,
     queue,
     rapports,
     sites,
@@ -63,6 +67,7 @@ app.include_router(bays.router, prefix=API_PREFIX)
 app.include_router(horaires.router, prefix=API_PREFIX)
 app.include_router(queue.router, prefix=API_PREFIX)
 app.include_router(payments.router, prefix=API_PREFIX)
+app.include_router(pointage.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(transactions.router, prefix=API_PREFIX)
 app.include_router(vehicules.router, prefix=API_PREFIX)
@@ -73,8 +78,9 @@ app.include_router(anomalies.router, prefix=API_PREFIX)
 app.include_router(rapports.router, prefix=API_PREFIX)
 app.include_router(live.router, prefix=API_PREFIX)
 
-# TODO(dev): monter le stockage médias en statique :
-#   app.mount("/media", StaticFiles(directory=settings.media_root), name="media")
+# Stockage médias servi en statique (selfies de pointage, captures…).
+os.makedirs(settings.media_root, exist_ok=True)
+app.mount("/media", StaticFiles(directory=settings.media_root), name="media")
 
 
 @app.get("/health", tags=["health"])

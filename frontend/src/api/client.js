@@ -110,6 +110,9 @@ export const api = {
   forfaits: () => request("/forfaits"),
   creerForfait: (payload) => request("/forfaits", { method: "POST", body: payload }),
   modifierForfait: (id, payload) => request(`/forfaits/${id}`, { method: "PUT", body: payload }),
+  consommation: (forfaitId) => request(`/forfaits/${forfaitId}/consommation`),
+  majConsommation: (forfaitId, items) =>
+    request(`/forfaits/${forfaitId}/consommation`, { method: "PUT", body: items }),
   supprimerForfait: (id) => request(`/forfaits/${id}`, { method: "DELETE" }),
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),

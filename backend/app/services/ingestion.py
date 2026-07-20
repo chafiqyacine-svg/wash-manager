@@ -23,7 +23,9 @@ from app.models import (
     Bay,
     Employe,
     Forfait,
+    ForfaitProduit,
     HoraireSite,
+    Produit,
     Ticket,
     Transaction,
     Vehicule,
@@ -198,6 +200,9 @@ def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) 
         #   (services.notification.envoyer_alerte_whatsapp) via une tâche de fond,
         #   puis marquer Anomalie.notifie = True.
 
+    # Consommation d'inventaire selon la recette du forfait effectué.
+    _consommer_produits(db, txn, forfait_detecte)
+
     # Anomalie « lavage hors horaires d'ouverture » (dépend du site + horaires).
     if _hors_horaires_ouverture(db, txn):
         db.add(Anomalie(
@@ -208,6 +213,40 @@ def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) 
             photo=txn.photo_entree,
         ))
     return txn
+
+
+def _consommer_produits(db: Session, txn: Transaction, forfait_detecte) -> None:
+    """Décrémente le stock des produits consommés par le forfait effectué.
+
+    Consomme 1 / lavages_par_unite par lavage. Ne décrémente que les produits
+    situés au site du lavage (via la baie) ; si le lavage n'a pas de baie, tous
+    les produits de la recette sont concernés.
+    """
+    # Forfait effectif : le forfait facturé sinon celui détecté.
+    forfait_id = txn.forfait_id
+    if forfait_id is None and forfait_detecte is not None:
+        f = db.scalar(select(Forfait).where(Forfait.nom == forfait_detecte.nom))
+        forfait_id = f.id if f else None
+    if forfait_id is None:
+        return
+
+    site_id = None
+    if txn.bay_id is not None:
+        bay = db.get(Bay, txn.bay_id)
+        site_id = bay.site_id if bay else None
+
+    recette = db.scalars(
+        select(ForfaitProduit).where(ForfaitProduit.forfait_id == forfait_id)
+    ).all()
+    for ligne in recette:
+        produit: Produit | None = ligne.produit
+        if produit is None or not ligne.lavages_par_unite:
+            continue
+        # N'affecte que le stock du site du lavage (si connu).
+        if site_id is not None and produit.site_id is not None and produit.site_id != site_id:
+            continue
+        produit.quantite = max(0, float(produit.quantite) - 1 / ligne.lavages_par_unite)
+        # TODO(dev): si produit.quantite <= seuil_alerte -> alerte réappro.
 
 
 def _hors_horaires_ouverture(db: Session, txn: Transaction) -> bool:

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import RecetteEditor from "../components/RecetteEditor.jsx";
 import WeekHoursEditor from "../components/WeekHoursEditor.jsx";
 
 const ZONES = [
@@ -270,6 +271,9 @@ export default function Config() {
           <div className="text-slate-400 text-sm">Sélectionnez un site pour éditer ses horaires.</div>
         )}
       </div>
+
+      {/* Consommation produits par forfait */}
+      <RecetteEditor />
     </div>
   );
 }

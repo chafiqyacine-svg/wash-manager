@@ -1,11 +1,12 @@
 """Configuration des forfaits (nom, prix, zones requises, seuils de temps)."""
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Forfait, Ticket, Transaction
+from app.models import Forfait, ForfaitProduit, Ticket, Transaction
 from app.schemas.common import ForfaitCreate, ForfaitOut, ForfaitUpdate
 
 router = APIRouter(prefix="/forfaits", tags=["forfaits"],
@@ -43,6 +44,34 @@ def modifier_forfait(
     db.commit()
     db.refresh(forfait)
     return forfait
+
+
+# ─── Recette de consommation (forfait → produits) ────────────────────────────
+class ConsommationItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    produit_id: int
+    lavages_par_unite: int
+
+
+@router.get("/{forfait_id}/consommation", response_model=list[ConsommationItem])
+def consommation(forfait_id: int, db: Session = Depends(get_db)):
+    return db.scalars(
+        select(ForfaitProduit).where(ForfaitProduit.forfait_id == forfait_id)
+    ).all()
+
+
+@router.put("/{forfait_id}/consommation", response_model=list[ConsommationItem])
+def maj_consommation(forfait_id: int, items: list[ConsommationItem],
+                     db: Session = Depends(get_db)):
+    """Définit la recette : quels produits ce forfait consomme et à quel rythme."""
+    if db.get(Forfait, forfait_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Forfait inconnu")
+    db.execute(delete(ForfaitProduit).where(ForfaitProduit.forfait_id == forfait_id))
+    for it in items:
+        db.add(ForfaitProduit(forfait_id=forfait_id, produit_id=it.produit_id,
+                              lavages_par_unite=max(1, it.lavages_par_unite)))
+    db.commit()
+    return consommation(forfait_id, db)
 
 
 @router.delete("/{forfait_id}", status_code=status.HTTP_204_NO_CONTENT)

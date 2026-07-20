@@ -150,6 +150,16 @@ CREATE TABLE produits (
 );
 CREATE INDEX idx_produits_site ON produits(site_id);
 
+-- Recette de consommation : quel produit un forfait consomme et à quel rythme
+-- (1 unité tous les `lavages_par_unite` lavages).
+CREATE TABLE forfait_produits (
+    id                SERIAL PRIMARY KEY,
+    forfait_id        INTEGER NOT NULL REFERENCES forfaits(id),
+    produit_id        INTEGER NOT NULL REFERENCES produits(id),
+    lavages_par_unite INTEGER DEFAULT 1
+);
+CREATE INDEX idx_forfait_produits_f ON forfait_produits(forfait_id);
+
 -- Paramètres configurables (clé-valeur) éditables depuis le dashboard.
 CREATE TABLE parametres (
     cle         VARCHAR(64) PRIMARY KEY,

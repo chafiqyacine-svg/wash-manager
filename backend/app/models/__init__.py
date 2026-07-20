@@ -11,6 +11,7 @@ from app.models.enums import (
     ZoneCode,
 )
 from app.models.forfait import Forfait
+from app.models.forfait_produit import ForfaitProduit
 from app.models.horaire import HoraireEmploye, HoraireSite
 from app.models.parametre import Parametre
 from app.models.pointage import Pointage
@@ -27,6 +28,7 @@ __all__ = [
     "Bay",
     "Employe",
     "Forfait",
+    "ForfaitProduit",
     "HoraireEmploye",
     "HoraireSite",
     "Parametre",

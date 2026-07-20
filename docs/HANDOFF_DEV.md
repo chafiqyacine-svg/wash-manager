@@ -87,6 +87,11 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Inventaire** : `produits` (stock par site + seuil d'alerte). Endpoints
   `/produits` (GET filtrable + sous_seuil, POST, PATCH, mouvement +/-, suppression
   logique). Page Inventory (ajustement stock, alerte réappro, par site).
+- **Consommation par forfait** : `forfait_produits` (recette : 1 unité tous les N
+  lavages). À chaque lavage clôturé, le stock du produit (au site du lavage) est
+  décrémenté automatiquement (`_consommer_produits`). Endpoints
+  `GET/PUT /forfaits/{id}/consommation` ; éditeur de recette dans Configuration.
+  Vérifié : 8 lavages Premium → 2 unités de cire consommées, isolation par site.
 - **Page Employés + classement** : `GET /employes/performance` (véhicules, temps
   moyen, conformité, revenus, score, trié) + écran Employés.
 - **Employés rattachés à un site** : `site_id` sur l'employé ; liste, classement

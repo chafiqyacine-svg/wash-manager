@@ -63,8 +63,20 @@ python detect_video.py --video ma_video.mp4 --out annote.mp4
 python detect_video.py --video ma_video.mp4 --ligne 0,540,1920,540 --out annote.mp4
 ```
 
-Le `Detector` et `CameraStream` sont fonctionnels : `CameraStream` accepte une
-URL RTSP **ou** un chemin de fichier vidéo comme `source`.
+`Detector`, `Tracker` (ByteTrack via ultralytics) et `CameraStream` sont
+fonctionnels. `detect_video.py` **suit** chaque véhicule (track_id) pour un
+comptage fiable (pas de double comptage) et peut **émettre des événements** vers
+le backend comme une vraie caméra :
+
+```bash
+# comptage seul (vidéo annotée)
+python detect_video.py --video lavage.mp4 --ligne 0,540,1920,540 --out annote.mp4
+# + émission d'événements ENTREE vers le backend
+python detect_video.py --video lavage.mp4 --ligne 0,540,1920,540 --emit \
+    --backend http://localhost:8000 --ingest-key change-me-ingest-key
+```
+
+`CameraStream` accepte une URL RTSP **ou** un chemin de fichier vidéo comme `source`.
 
 ## Dépendances (voir requirements.txt)
 

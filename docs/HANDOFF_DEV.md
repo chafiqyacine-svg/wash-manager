@@ -102,6 +102,15 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Anomalie « lavage hors horaires »** : à la finalisation, l'heure d'entrée est
   comparée aux horaires d'ouverture du site (via la baie) ; si hors ouverture
   (ou jour fermé) → anomalie MOYENNE.
+- **Alertes RH retard/absence** : `services/alertes.py`. Retard détecté au
+  pointage d'arrivée (au-delà de la tolérance configurable) ; absences détectées
+  par un scan planifié (toutes les 15 min) des employés planifiés non pointés.
+  Chaque alerte = anomalie (liée à l'employé) + diffusion temps réel + log
+  (WhatsApp à câbler). Seuils configurables (`tolerance_retard_minutes`,
+  `delai_absence_minutes`).
+- **IA vidéo (finition)** : `Tracker` (ByteTrack via ultralytics) + `detect_video.py`
+  avec suivi → comptage fiable (anti-doublon) et émission optionnelle d'événements
+  ENTREE vers le backend (`--emit`). Testable sur une vidéo sans caméras.
 - **Mode test vidéo (IA)** : `Detector` (ultralytics) et `CameraStream` (RTSP ou
   fichier) fonctionnels + `ai/detect_video.py` — teste la détection de véhicules
   sur une vidéo avec YOLO pré-entraîné, sans caméras installées.

@@ -13,6 +13,8 @@ class Anomalie(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     transaction_id: Mapped[int | None] = mapped_column(ForeignKey("transactions.id"))
+    # Employé concerné (pour les alertes RH : retard, absence).
+    employe_id: Mapped[int | None] = mapped_column(ForeignKey("employes.id"))
 
     type: Mapped[AnomalieType] = mapped_column(String(32))
     severite: Mapped[AnomalieSeverite] = mapped_column(String(16), index=True)

@@ -102,6 +102,7 @@ class TransactionOut(ORMModel):
 class AnomalieOut(ORMModel):
     id: int
     transaction_id: int | None
+    employe_id: int | None
     type: str
     severite: str
     description: str | None

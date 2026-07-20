@@ -39,7 +39,9 @@ def main() -> None:
 
     # Modèles partagés (TODO(dev): .load() réel — nécessite les poids)
     detector = Detector(cfg["models"]["vehicule_detector"])
-    tracker = Tracker(cfg["tracking"]["type"], cfg["tracking"]["max_age"])
+    # Le tracker détecte + suit les véhicules en une passe (ByteTrack).
+    tracker = Tracker(cfg["models"]["vehicule_detector"],
+                      tracker_cfg=f"{cfg['tracking']['type']}.yaml")
     plaque_detector = Detector(cfg["models"]["plaque_detector"])
     lpr = LecteurPlaque(plaque_detector, cfg["models"]["ocr_lang"])
     # detector.load(); tracker.load(); plaque_detector.load(); lpr.load()

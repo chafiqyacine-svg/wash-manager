@@ -13,6 +13,7 @@ from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.models import Employe, Pointage
+from app.services.alertes import verifier_retard
 from app.services.photo import enregistrer_selfie
 
 router = APIRouter(prefix="/pointage", tags=["pointage"],
@@ -39,12 +40,20 @@ async def pointer(
     db.add(pointage)
     db.commit()
     db.refresh(pointage)
+
+    # Alerte de retard à l'arrivée (au-delà de la tolérance configurée).
+    retard = None
+    if type == "arrivee":
+        alerte = verifier_retard(db, employe_id, heure)
+        retard = alerte.description if alerte else None
+
     return {
         "id": pointage.id,
         "employe_id": employe_id,
         "type": type,
         "heure": heure,
         "photo_url": f"{settings.media_base_url}/{chemin}",
+        "alerte_retard": retard,
     }
 
 

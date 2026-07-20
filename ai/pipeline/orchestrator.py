@@ -53,9 +53,8 @@ class CameraWorker:
         self.zone_code = cam_config.get("zone_code")
 
     def traiter_frame(self, image) -> None:
-        """Traite une frame : détecte, suit, évalue zones/lignes, émet events."""
-        detections = self.detector.detect(image)
-        tracks = self.tracker.update(detections, image)
+        """Traite une frame : détecte+suit, évalue zones/lignes, émet events."""
+        tracks = self.tracker.update(image)  # détection + suivi (ByteTrack)
 
         for track in tracks:
             point = _point_reference(track.bbox)

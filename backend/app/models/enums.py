@@ -24,6 +24,8 @@ class AnomalieType(str, enum.Enum):
     TEMPS_ANORMAL = "temps_anormal"                 # durée trop courte/longue
     PLAQUE_NON_LUE = "plaque_non_lue"               # échec OCR
     LAVAGE_HORS_HORAIRES = "lavage_hors_horaires"   # lavage hors ouverture du site
+    RETARD = "retard"                               # employé en retard (RH)
+    ABSENCE = "absence"                             # employé absent (RH)
 
 
 class AnomalieSeverite(str, enum.Enum):

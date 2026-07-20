@@ -12,6 +12,12 @@ DEFAUTS: dict[str, tuple[str, str]] = {
     "fenetre_rapprochement_minutes": (
         "30", "Fenêtre (minutes) de rapprochement automatique ticket ↔ véhicule."
     ),
+    "tolerance_retard_minutes": (
+        "10", "Retard toléré (minutes) avant de lever une alerte de retard."
+    ),
+    "delai_absence_minutes": (
+        "30", "Délai (minutes) après le début du créneau avant de déclarer une absence."
+    ),
 }
 
 

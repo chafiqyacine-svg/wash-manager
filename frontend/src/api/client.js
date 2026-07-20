@@ -71,6 +71,8 @@ export const api = {
   modifierEmploye: (id, payload) => request(`/employes/${id}`, { method: "PATCH", body: payload }),
   employePerformance: (jours = 7, siteId) =>
     request(`/employes/performance?jours=${jours}${siteId ? `&site_id=${siteId}` : ""}`),
+  presence: (jour, siteId) =>
+    request(`/employes/presence?${jour ? `jour=${jour}` : ""}${siteId ? `&site_id=${siteId}` : ""}`),
   // Pointage (selfie horodaté par le serveur)
   pointages: () => request("/pointage"),
   async pointer(employeId, type, blob) {

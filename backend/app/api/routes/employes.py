@@ -9,6 +9,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import Employe, Forfait, Transaction
 from app.schemas.common import EmployeCreate, EmployeOut, EmployeUpdate
+from app.services.presence import presence_du_jour
 from app.services.rapport import _perf_employes
 
 router = APIRouter(prefix="/employes", tags=["employes"],
@@ -71,6 +72,13 @@ def performance(
     prix = {f.id: float(f.prix) for f in db.scalars(select(Forfait)).all()}
     noms = {e.id: e.nom for e in employes}
     return _perf_employes(txns, prix, noms)
+
+
+@router.get("/presence")
+def presence(db: Session = Depends(get_db), jour: date | None = None,
+             site_id: int | None = None) -> list[dict]:
+    """Présence, ponctualité et productivité des employés pour un jour donné."""
+    return presence_du_jour(db, jour or date.today(), site_id)
 
 
 @router.get("/{employe_id}/metriques")

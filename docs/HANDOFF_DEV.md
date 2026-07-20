@@ -95,8 +95,13 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Horaires** : ouverture des sites (`GET/PUT /sites/{id}/horaires`) et créneaux
   de travail des employés (`GET/PUT /employes/{id}/horaires`), éditables via un
   éditeur hebdomadaire (Config = ouverture ; Employés = travail).
-  TODO(dev) : exploiter les horaires pour présence/ponctualité/temps mort et
-  l'anomalie « lavage hors horaires d'ouverture ».
+- **Présence / ponctualité / productivité** : `GET /employes/presence` croise
+  planning (créneaux) + pointages (arrivée/départ) + lavages effectués →
+  statut (présent/absent/non planifié), retard, temps présent, temps actif,
+  temps mort, productivité. Page « Présence » (date + site).
+- **Anomalie « lavage hors horaires »** : à la finalisation, l'heure d'entrée est
+  comparée aux horaires d'ouverture du site (via la baie) ; si hors ouverture
+  (ou jour fermé) → anomalie MOYENNE.
 - **Mode test vidéo (IA)** : `Detector` (ultralytics) et `CameraStream` (RTSP ou
   fichier) fonctionnels + `ai/detect_video.py` — teste la détection de véhicules
   sur une vidéo avec YOLO pré-entraîné, sans caméras installées.

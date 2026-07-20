@@ -23,6 +23,7 @@ class AnomalieType(str, enum.Enum):
     TICKET_FANTOME = "ticket_fantome"               # ticket POS sans véhicule
     TEMPS_ANORMAL = "temps_anormal"                 # durée trop courte/longue
     PLAQUE_NON_LUE = "plaque_non_lue"               # échec OCR
+    LAVAGE_HORS_HORAIRES = "lavage_hors_horaires"   # lavage hors ouverture du site
 
 
 class AnomalieSeverite(str, enum.Enum):

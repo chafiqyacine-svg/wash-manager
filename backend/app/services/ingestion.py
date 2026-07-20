@@ -18,8 +18,17 @@ from datetime import date, datetime, time
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Anomalie, Employe, Forfait, Ticket, Transaction, Vehicule
-from app.models.enums import ZoneCode
+from app.models import (
+    Anomalie,
+    Bay,
+    Employe,
+    Forfait,
+    HoraireSite,
+    Ticket,
+    Transaction,
+    Vehicule,
+)
+from app.models.enums import AnomalieSeverite, AnomalieType, ZoneCode
 from app.schemas.event import EventIn, EventType
 from app.services import classification as clf
 from app.services.anomalie import ContexteTransaction, detecter_anomalies
@@ -188,7 +197,36 @@ def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) 
         # TODO(dev): pour severite CRITIQUE/HAUTE, déclencher l'alerte WhatsApp
         #   (services.notification.envoyer_alerte_whatsapp) via une tâche de fond,
         #   puis marquer Anomalie.notifie = True.
+
+    # Anomalie « lavage hors horaires d'ouverture » (dépend du site + horaires).
+    if _hors_horaires_ouverture(db, txn):
+        db.add(Anomalie(
+            transaction_id=txn.id,
+            type=AnomalieType.LAVAGE_HORS_HORAIRES,
+            severite=AnomalieSeverite.MOYENNE,
+            description="Lavage effectué en dehors des horaires d'ouverture du site.",
+            photo=txn.photo_entree,
+        ))
     return txn
+
+
+def _hors_horaires_ouverture(db: Session, txn: Transaction) -> bool:
+    """True si l'heure d'entrée est hors des horaires d'ouverture du site."""
+    if txn.heure_entree is None or txn.bay_id is None:
+        return False
+    bay = db.get(Bay, txn.bay_id)
+    if bay is None:
+        return False
+    entree = txn.heure_entree
+    horaire = db.scalar(
+        select(HoraireSite).where(
+            HoraireSite.site_id == bay.site_id,
+            HoraireSite.jour == entree.weekday(),
+        )
+    )
+    if horaire is None:
+        return True  # site fermé ce jour-là
+    return not (horaire.heure_ouverture <= entree.time() <= horaire.heure_fermeture)
 
 
 def _forfaits_def(db: Session) -> list[clf.ForfaitDef]:

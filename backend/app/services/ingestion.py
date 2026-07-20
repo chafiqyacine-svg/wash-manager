@@ -13,10 +13,19 @@ La clôture (rapprochement ticket + persistance des anomalies) est implémentée
 Reste en TODO(dev) : la résolution employé par badge NFC, l'idempotence des
 événements, et le déclenchement des alertes temps réel (WhatsApp).
 """
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+
+def _duree_secondes(debut: datetime, fin: datetime) -> int:
+    """Durée en secondes, robuste aux fuseaux (SQLite naïf vs PostgreSQL aware)."""
+    if debut.tzinfo is None and fin.tzinfo is not None:
+        debut = debut.replace(tzinfo=fin.tzinfo)
+    elif fin.tzinfo is None and debut.tzinfo is not None:
+        fin = fin.replace(tzinfo=debut.tzinfo)
+    return int((fin - debut).total_seconds())
 
 from app.models import (
     Anomalie,
@@ -142,13 +151,7 @@ def _on_sortie(db: Session, event: EventIn) -> Transaction | None:
     txn.heure_sortie = event.timestamp
     txn.photo_sortie = event.photo or txn.photo_sortie
     if txn.heure_entree:
-        # Normalise les fuseaux (SQLite stocke des datetimes naïfs).
-        entree, sortie = txn.heure_entree, txn.heure_sortie
-        if entree.tzinfo is None and sortie.tzinfo is not None:
-            entree = entree.replace(tzinfo=sortie.tzinfo)
-        elif sortie.tzinfo is None and entree.tzinfo is not None:
-            sortie = sortie.replace(tzinfo=entree.tzinfo)
-        txn.duree_totale = int((sortie - entree).total_seconds())
+        txn.duree_totale = _duree_secondes(txn.heure_entree, txn.heure_sortie)
     txn.statut = "cloturee"
 
     # Rapprochement automatique avec la caisse, puis finalisation.
@@ -353,7 +356,7 @@ def _calculer_duree_zone(txn: Transaction, zone: str) -> None:
     debut = getattr(txn, f"{prefix}_debut")
     fin = getattr(txn, f"{prefix}_fin")
     if debut and fin:
-        setattr(txn, f"{prefix}_duree", int((fin - debut).total_seconds()))
+        setattr(txn, f"{prefix}_duree", _duree_secondes(debut, fin))
 
 
 def _zones_visitees(txn: Transaction) -> set[str]:

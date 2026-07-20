@@ -31,8 +31,9 @@ services:
     volumes:
       - ./backend:/app
       - media:/data/media
-    # TODO(dev): en prod, retirer --reload et servir via gunicorn/uvicorn workers
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # Applique les migrations Alembic avant de démarrer l'API.
+    # En prod, retirer --reload et servir via gunicorn/uvicorn workers.
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
     build: ./frontend

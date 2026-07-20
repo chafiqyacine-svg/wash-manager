@@ -2,8 +2,8 @@
 
 Usage : `python -m app.db.seed`
 
-⚠️ Utilise create_all pour le prototypage. En production, préférez Alembic.
-TODO(dev): mettre en place les migrations Alembic et retirer create_all.
+Le schéma est géré par Alembic (`alembic upgrade head`). `create_all` reste ici
+uniquement par commodité en dev (no-op si les tables existent déjà).
 """
 from datetime import date
 

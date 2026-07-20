@@ -56,6 +56,17 @@ docker compose up -d          # postgres + backend + frontend
 Voir `backend/README.md`, `ai/README.md`, `frontend/README.md` pour le détail de
 chaque brique et la liste des `TODO(dev)`.
 
+## Documentation
+
+| Document | Pour qui |
+|----------|----------|
+| `docs/GUIDE_UTILISATEUR.md` | **Mode d'emploi** complet de la plateforme (chaque écran). |
+| `docs/GUIDE_DEVELOPPEUR.md` | **Guide développeur** : naviguer le code, continuer le dev. |
+| `docs/DEPLOIEMENT.md` | Mise en **production** (VPS, Docker, migrations, sauvegardes). |
+| `docs/ARCHITECTURE.md` | Schémas d'architecture et de flux. |
+| `docs/HANDOFF_DEV.md` | Liste des `TODO(dev)` restants. |
+| `docs/schema.sql` | Schéma SQL de référence. |
+
 ## Développer sans caméras (données de démo)
 
 Tant que le matériel n'est pas installé, on peut faire vivre tout le système

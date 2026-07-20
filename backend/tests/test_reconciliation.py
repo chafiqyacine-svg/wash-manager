@@ -1,5 +1,5 @@
 """Tests du rapprochement transaction ↔ ticket de caisse (fonction pure)."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.services.reconciliation import (
     InfoTransaction,
@@ -39,3 +39,11 @@ def test_aucun_candidat_dans_fenetre():
 
 def test_aucun_ticket():
     assert choisir_ticket(_txn(plaque="12345-A-67"), []) is None
+
+
+def test_fuseaux_mixtes_ne_plantent_pas():
+    # Transaction aware (PostgreSQL) vs ticket naïf (SQLite) — ne doit pas lever.
+    txn = InfoTransaction(plaque=None, heure_entree=T0.replace(tzinfo=timezone.utc),
+                          heure_sortie=None)
+    candidats = [TicketCandidat(id=1, plaque=None, heure=T0 - timedelta(minutes=3))]
+    assert choisir_ticket(txn, candidats).id == 1

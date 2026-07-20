@@ -13,7 +13,15 @@ Stratégie de matching (fonction pure, testable sans DB) :
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+
+def _aware(dt: datetime | None) -> datetime | None:
+    """Normalise en UTC-aware pour comparer sereinement naïf et aware
+    (SQLite renvoie des datetimes naïfs, PostgreSQL des datetimes aware)."""
+    if dt is not None and dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 @dataclass
@@ -50,15 +58,16 @@ def choisir_ticket(
             return _plus_proche(txn.heure_reference, exacts) or exacts[0]
 
     # 2) Match temporel dans la fenêtre
-    ref = txn.heure_reference
+    ref = _aware(txn.heure_reference)
     if ref is None:
         return None
     fenetre = timedelta(minutes=fenetre_minutes)
-    dans_fenetre = [c for c in candidats if abs(c.heure - ref) <= fenetre]
+    dans_fenetre = [c for c in candidats if abs(_aware(c.heure) - ref) <= fenetre]
     return _plus_proche(ref, dans_fenetre)
 
 
 def _plus_proche(ref: datetime | None, candidats: list[TicketCandidat]) -> TicketCandidat | None:
+    ref = _aware(ref)
     if ref is None or not candidats:
         return None
-    return min(candidats, key=lambda c: abs(c.heure - ref))
+    return min(candidats, key=lambda c: abs(_aware(c.heure) - ref))

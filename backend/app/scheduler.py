@@ -8,6 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.alertes import scanner_absences
+from app.services.maintenance import nettoyer_transactions_orphelines
 from app.services.rapport import generer_rapport_journalier
 
 
@@ -31,6 +32,15 @@ def _job_scan_absences() -> None:
         db.close()
 
 
+def _job_nettoyage_orphelines() -> None:
+    """Clôture les lavages « en cours » trop anciens (sortie non détectée)."""
+    db = SessionLocal()
+    try:
+        nettoyer_transactions_orphelines(db)
+    finally:
+        db.close()
+
+
 def demarrer_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="Africa/Casablanca")
     scheduler.add_job(
@@ -44,6 +54,13 @@ def demarrer_scheduler() -> BackgroundScheduler:
         _job_scan_absences,
         IntervalTrigger(minutes=15),
         id="scan_absences",
+        replace_existing=True,
+    )
+    # Toutes les heures : nettoyage des transactions orphelines.
+    scheduler.add_job(
+        _job_nettoyage_orphelines,
+        IntervalTrigger(hours=1),
+        id="nettoyage_orphelines",
         replace_existing=True,
     )
     scheduler.start()

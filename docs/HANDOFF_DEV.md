@@ -121,6 +121,12 @@ table `tickets` via un connecteur — le reste ne change pas.
 - **Anomalie « lavage hors horaires »** : à la finalisation, l'heure d'entrée est
   comparée aux horaires d'ouverture du site (via la baie) ; si hors ouverture
   (ou jour fermé) → anomalie MOYENNE.
+- **Nettoyage des transactions orphelines** : job horaire (`services/maintenance.py`)
+  qui clôture en « abandonnee » les lavages « en_cours » plus vieux que
+  `delai_abandon_heures` (défaut 4 h) — évite de gonfler le compteur des en-cours.
+- **Verrou anti-concurrence** : `_rapprocher_ticket` verrouille le ticket choisi
+  (`with_for_update`, effectif en PostgreSQL) et revérifie son statut avant de
+  l'associer, pour éviter un double rapprochement en cas de clôtures simultanées.
 - **Alertes RH retard/absence** : `services/alertes.py`. Retard détecté au
   pointage d'arrivée (au-delà de la tolérance configurable) ; absences détectées
   par un scan planifié (toutes les 15 min) des employés planifiés non pointés.

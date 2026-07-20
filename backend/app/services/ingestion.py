@@ -322,7 +322,14 @@ def _rapprocher_ticket(db: Session, txn: Transaction) -> Ticket | None:
     )
     if choisi is None:
         return None
-    return next((t for t in tickets if t.id == choisi.id), None)
+    # Anti-concurrence : on VERROUILLE le ticket choisi (SELECT ... FOR UPDATE en
+    # PostgreSQL) et on revérifie qu'il est toujours « ouvert ». Si une autre
+    # clôture simultanée l'a déjà pris, on renonce (pas de double rapprochement).
+    return db.scalar(
+        select(Ticket)
+        .where(Ticket.id == choisi.id, Ticket.statut == "ouvert")
+        .with_for_update()
+    )
 
 
 # ─── Helpers zones ───────────────────────────────────────────────────────────

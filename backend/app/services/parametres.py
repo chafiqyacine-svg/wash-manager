@@ -18,6 +18,10 @@ DEFAUTS: dict[str, tuple[str, str]] = {
     "delai_absence_minutes": (
         "30", "Délai (minutes) après le début du créneau avant de déclarer une absence."
     ),
+    "delai_abandon_heures": (
+        "4", "Durée (heures) au-delà de laquelle un lavage « en cours » sans sortie "
+             "est considéré abandonné et clôturé automatiquement."
+    ),
 }
 
 

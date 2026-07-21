@@ -13,6 +13,7 @@ const MENU = [
   { to: "/presence", label: "Présence", icon: "🕒" },
   { to: "/payments", label: "Payments", icon: "💲" },
   { to: "/inventory", label: "Inventory", icon: "📦" },
+  { to: "/marges", label: "Marges", icon: "💰" },
   { to: "/anomalies", label: "Anomalies", icon: "⚠️" },
   { to: "/history", label: "Historique", icon: "🧾" },
   { to: "/reports", label: "Rapports", icon: "📊" },

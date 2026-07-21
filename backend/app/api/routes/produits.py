@@ -20,6 +20,7 @@ class ProduitOut(BaseModel):
     unite: str
     quantite: float
     seuil_alerte: float
+    prix_unitaire: float
     actif: bool
 
 
@@ -29,6 +30,7 @@ class ProduitCreate(BaseModel):
     unite: str = "unité"
     quantite: float = 0
     seuil_alerte: float = 0
+    prix_unitaire: float = 0
 
 
 class ProduitUpdate(BaseModel):
@@ -36,6 +38,7 @@ class ProduitUpdate(BaseModel):
     unite: str | None = None
     quantite: float | None = None
     seuil_alerte: float | None = None
+    prix_unitaire: float | None = None
     actif: bool | None = None
 
 

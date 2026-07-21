@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 
-const VIDE = { nom: "", unite: "L", quantite: 0, seuil_alerte: 0, site_id: "" };
+const VIDE = { nom: "", unite: "L", quantite: 0, seuil_alerte: 0, prix_unitaire: 0, site_id: "" };
 
 // Inventaire : stock des consommables par site, avec alerte de réapprovisionnement.
 export default function Inventory() {
@@ -19,6 +19,10 @@ export default function Inventory() {
   const bas = (p) => Number(p.quantite) <= Number(p.seuil_alerte);
 
   const bouger = async (id, delta) => { await api.mouvementProduit(id, delta).catch(() => {}); charger(); };
+  const majPrix = async (id, prix) => {
+    await api.modifierProduit(id, { prix_unitaire: Number(prix) || 0 }).catch(() => {});
+    charger();
+  };
 
   const ajouter = async () => {
     setMessage("");
@@ -26,6 +30,7 @@ export default function Inventory() {
       await api.creerProduit({
         nom: nouveau.nom, unite: nouveau.unite,
         quantite: Number(nouveau.quantite), seuil_alerte: Number(nouveau.seuil_alerte),
+        prix_unitaire: Number(nouveau.prix_unitaire),
         site_id: nouveau.site_id ? Number(nouveau.site_id) : null,
       });
       setNouveau(VIDE); charger();
@@ -61,6 +66,7 @@ export default function Inventory() {
               <th className="p-3 font-medium">Site</th>
               <th className="p-3 font-medium text-right">Stock</th>
               <th className="p-3 font-medium text-right">Seuil</th>
+              <th className="p-3 font-medium text-right">Prix unit.</th>
               <th className="p-3 font-medium text-center">Ajuster</th>
               <th className="p-3 font-medium"></th>
             </tr>
@@ -74,6 +80,11 @@ export default function Inventory() {
                 <td className="p-3 text-slate-500">{nomSite(p.site_id)}</td>
                 <td className="p-3 text-right">{p.quantite} {p.unite}</td>
                 <td className="p-3 text-right text-slate-500">{p.seuil_alerte} {p.unite}</td>
+                <td className="p-3 text-right">
+                  <input type="number" defaultValue={p.prix_unitaire} step="0.01"
+                    onBlur={(e) => Number(e.target.value) !== Number(p.prix_unitaire) && majPrix(p.id, e.target.value)}
+                    className="w-20 border rounded px-1 py-0.5 text-right text-slate-600" /> DH
+                </td>
                 <td className="p-3 text-center whitespace-nowrap">
                   <button onClick={() => bouger(p.id, -1)} className="w-7 h-7 rounded bg-slate-100">−</button>
                   <button onClick={() => bouger(p.id, 1)} className="w-7 h-7 rounded bg-slate-100 ml-1">+</button>
@@ -85,7 +96,7 @@ export default function Inventory() {
               </tr>
             ))}
             {produits.length === 0 && (
-              <tr><td className="p-3 text-slate-400" colSpan={6}>Aucun produit.</td></tr>
+              <tr><td className="p-3 text-slate-400" colSpan={7}>Aucun produit.</td></tr>
             )}
           </tbody>
         </table>
@@ -94,7 +105,7 @@ export default function Inventory() {
       {/* Ajouter un produit */}
       <div className="bg-white rounded-2xl shadow-sm p-4 max-w-3xl">
         <h2 className="font-semibold text-slate-800 mb-2">Ajouter un produit</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
           <input className="border rounded px-2 py-1" placeholder="Nom"
             value={nouveau.nom} onChange={(e) => setNouveau({ ...nouveau, nom: e.target.value })} />
           <input className="border rounded px-2 py-1" placeholder="Unité (L, kg…)"
@@ -103,6 +114,8 @@ export default function Inventory() {
             value={nouveau.quantite} onChange={(e) => setNouveau({ ...nouveau, quantite: e.target.value })} />
           <input type="number" className="border rounded px-2 py-1" placeholder="Seuil"
             value={nouveau.seuil_alerte} onChange={(e) => setNouveau({ ...nouveau, seuil_alerte: e.target.value })} />
+          <input type="number" step="0.01" className="border rounded px-2 py-1" placeholder="Prix unit. (DH)"
+            value={nouveau.prix_unitaire} onChange={(e) => setNouveau({ ...nouveau, prix_unitaire: e.target.value })} />
           <select className="border rounded px-2 py-1" value={nouveau.site_id}
             onChange={(e) => setNouveau({ ...nouveau, site_id: e.target.value })}>
             <option value="">Site…</option>

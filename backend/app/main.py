@@ -17,6 +17,7 @@ from app.api.routes import (
     forfaits,
     horaires,
     live,
+    marges,
     parametres,
     payments,
     pointage,
@@ -75,6 +76,7 @@ app.include_router(transactions.router, prefix=API_PREFIX)
 app.include_router(vehicules.router, prefix=API_PREFIX)
 app.include_router(employes.router, prefix=API_PREFIX)
 app.include_router(forfaits.router, prefix=API_PREFIX)
+app.include_router(marges.router, prefix=API_PREFIX)
 app.include_router(parametres.router, prefix=API_PREFIX)
 app.include_router(anomalies.router, prefix=API_PREFIX)
 app.include_router(rapports.router, prefix=API_PREFIX)

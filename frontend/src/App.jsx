@@ -10,6 +10,7 @@ import Employees from "./pages/Employees.jsx";
 import History from "./pages/History.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import LiveView from "./pages/LiveView.jsx";
+import Marges from "./pages/Marges.jsx";
 import Login from "./pages/Login.jsx";
 import Payments from "./pages/Payments.jsx";
 import Pointage from "./pages/Pointage.jsx";
@@ -59,6 +60,7 @@ export default function App() {
                 <Route path="/queue" element={<Queue />} />
                 <Route path="/payments" element={<Payments />} />
                 <Route path="/inventory" element={<Inventory />} />
+                <Route path="/marges" element={<Marges />} />
                 <Route path="/vehicules" element={<Vehicules />} />
                 <Route path="/rapprochement" element={<Rapprochement />} />
                 <Route path="/employees" element={<Employees />} />

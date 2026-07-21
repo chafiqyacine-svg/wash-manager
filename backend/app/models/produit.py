@@ -20,6 +20,7 @@ class Produit(Base):
     unite: Mapped[str] = mapped_column(String(16), default="unité")  # L, kg, unité…
     quantite: Mapped[float] = mapped_column(Numeric(10, 2), default=0)
     seuil_alerte: Mapped[float] = mapped_column(Numeric(10, 2), default=0)
+    prix_unitaire: Mapped[float] = mapped_column(Numeric(10, 2), default=0)  # coût d'achat / unité
     actif: Mapped[bool] = mapped_column(Boolean, default=True)
 
     updated_at: Mapped[datetime] = mapped_column(

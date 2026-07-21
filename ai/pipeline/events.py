@@ -31,6 +31,7 @@ class Event:
     plaque: str | None = None
     plaque_confiance: float | None = None
     badge_nfc_id: str | None = None
+    couleur_gilet: str | None = None  # couleur de gilet détectée (hex) → identif. employé
     photo: str | None = None
     meta: dict | None = None
 

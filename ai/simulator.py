@@ -66,11 +66,13 @@ class BackendSession:
         resp.raise_for_status()
         return resp.json()
 
-    def creer_ticket(self, forfait_id: int, plaque: str | None) -> None:
+    def creer_ticket(self, forfait_id: int, plaque: str | None,
+                     mode_paiement: str = "espece") -> None:
         self._client.post(
             f"{self.api_base}/api/v1/tickets",
             headers={"Authorization": f"Bearer {self._token}"},
-            json={"forfait_id": forfait_id, "plaque": plaque},
+            json={"forfait_id": forfait_id, "plaque": plaque,
+                  "mode_paiement": mode_paiement},
         )
 
 
@@ -104,8 +106,10 @@ def simuler_vehicule(
     # 1) Ticket de caisse (sauf scénario "sans_ticket")
     if scenario != "sans_ticket":
         f = forfaits_par_nom[forfait_paye]
+        # Mode de paiement réaliste (majorité espèces) → alimente la clôture de caisse.
+        mode = random.choices(["espece", "carte", "autre"], weights=[6, 3, 1])[0]
         # Pour le ticket fantôme, plaque volontairement absente et pas de véhicule.
-        session.creer_ticket(f["id"], None if scenario == "ticket_fantome" else plaque)
+        session.creer_ticket(f["id"], None if scenario == "ticket_fantome" else plaque, mode)
     if scenario == "ticket_fantome":
         return  # aucun événement véhicule
 

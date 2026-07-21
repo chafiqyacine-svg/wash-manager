@@ -1,31 +1,32 @@
 import { NavLink } from "react-router-dom";
+import LangSwitcher from "./LangSwitcher.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useI18n } from "../context/I18nContext.jsx";
 
-// Menu principal (aligné sur la maquette « Clean It »). Les entrées pointent
-// vers les pages existantes ; certaines restent des squelettes (TODO(dev)).
+// Menu principal (aligné sur la maquette « Clean It »). `key` = clé de traduction.
 const MENU = [
-  { to: "/", label: "Home", icon: "🏠" },
-  { to: "/queue", label: "Queue Management", icon: "🚗" },
-  { to: "/vehicules", label: "Customer Management", icon: "👥" },
-  { to: "/bays", label: "Bay Management", icon: "🅿️" },
-  { to: "/employees", label: "Employés", icon: "🧑‍🔧" },
-  { to: "/pointage", label: "Pointage", icon: "📸" },
-  { to: "/presence", label: "Présence", icon: "🕒" },
-  { to: "/payments", label: "Payments", icon: "💲" },
-  { to: "/inventory", label: "Inventory", icon: "📦" },
-  { to: "/marges", label: "Marges", icon: "💰" },
-  { to: "/anomalies", label: "Anomalies", icon: "⚠️" },
-  { to: "/history", label: "Historique", icon: "🧾" },
-  { to: "/reports", label: "Rapports", icon: "📊" },
+  { to: "/", key: "nav.home", icon: "🏠" },
+  { to: "/queue", key: "nav.queue", icon: "🚗" },
+  { to: "/vehicules", key: "nav.customers", icon: "👥" },
+  { to: "/bays", key: "nav.bays", icon: "🅿️" },
+  { to: "/employees", key: "nav.employees", icon: "🧑‍🔧" },
+  { to: "/pointage", key: "nav.pointage", icon: "📸" },
+  { to: "/presence", key: "nav.presence", icon: "🕒" },
+  { to: "/payments", key: "nav.payments", icon: "💲" },
+  { to: "/inventory", key: "nav.inventory", icon: "📦" },
+  { to: "/marges", key: "nav.marges", icon: "💰" },
+  { to: "/anomalies", key: "nav.anomalies", icon: "⚠️" },
+  { to: "/history", key: "nav.history", icon: "🧾" },
+  { to: "/reports", key: "nav.reports", icon: "📊" },
 ];
 
 // Réservé aux administrateurs.
 const ADMIN = [
-  { to: "/users", label: "Utilisateurs", icon: "🔑" },
+  { to: "/users", key: "nav.users", icon: "🔑" },
 ];
 
 const SUPPORT = [
-  { to: "/config", label: "Settings", icon: "⚙️" },
+  { to: "/config", key: "nav.settings", icon: "⚙️" },
 ];
 
 function Item({ to, label, icon }) {
@@ -47,29 +48,33 @@ function Item({ to, label, icon }) {
 
 export default function Sidebar() {
   const { logout, isAdmin } = useAuth();
+  const { t } = useI18n();
   return (
     <aside className="w-64 bg-white border-r border-slate-100 flex flex-col p-4">
-      <div className="flex items-center gap-2 px-2 mb-6">
-        <span className="text-2xl">💧</span>
-        <span className="text-xl font-bold text-slate-800">Wash Manager</span>
+      <div className="flex items-center justify-between px-2 mb-6">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">💧</span>
+          <span className="text-xl font-bold text-slate-800">{t("app.title")}</span>
+        </div>
+        <LangSwitcher />
       </div>
 
-      <div className="text-xs text-slate-400 px-3 mb-1">Menu</div>
+      <div className="text-xs text-slate-400 px-3 mb-1">{t("nav.menu")}</div>
       <nav className="space-y-1">
-        {MENU.map((m) => <Item key={m.to} {...m} />)}
-        {isAdmin && ADMIN.map((m) => <Item key={m.to} {...m} />)}
+        {MENU.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
+        {isAdmin && ADMIN.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
       </nav>
 
-      <div className="text-xs text-slate-400 px-3 mt-6 mb-1">Support</div>
+      <div className="text-xs text-slate-400 px-3 mt-6 mb-1">{t("nav.support")}</div>
       <nav className="space-y-1">
-        {SUPPORT.map((m) => <Item key={m.to} {...m} />)}
+        {SUPPORT.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
       </nav>
 
       <button
         onClick={logout}
         className="mt-auto flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-slate-50"
       >
-        <span>🚪</span> Déconnexion
+        <span>🚪</span> {t("nav.logout")}
       </button>
     </aside>
   );

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import { useI18n } from "../context/I18nContext.jsx";
 
 const VIDE = { nom: "", unite: "L", quantite: 0, seuil_alerte: 0, prix_unitaire: 0, site_id: "" };
 
 // Inventaire : stock des consommables par site, avec alerte de réapprovisionnement.
 export default function Inventory() {
+  const { t } = useI18n();
   const [sites, setSites] = useState([]);
   const [siteId, setSiteId] = useState("");
   const [produits, setProduits] = useState([]);
@@ -44,16 +46,16 @@ export default function Inventory() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-slate-800">Inventaire</h1>
+        <h1 className="text-2xl font-bold text-slate-800">{t("inv.title")}</h1>
         <select value={siteId} onChange={(e) => setSiteId(e.target.value)}
           className="border rounded-lg px-3 py-2 bg-white text-sm">
-          <option value="">Tous les sites</option>
+          <option value="">{t("common.all_sites")}</option>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
         </select>
       </div>
       {nbBas > 0 && (
         <div className="mb-3 text-sm bg-amber-50 text-amber-800 rounded-lg px-3 py-2">
-          ⚠️ {nbBas} produit(s) sous le seuil de réapprovisionnement.
+          ⚠️ {nbBas} {t("inv.low_warning")}
         </div>
       )}
       {message && <div className="mb-3 text-sm text-red-600">{message}</div>}
@@ -62,12 +64,12 @@ export default function Inventory() {
         <table className="w-full text-sm">
           <thead className="text-slate-400 text-left">
             <tr>
-              <th className="p-3 font-medium">Produit</th>
-              <th className="p-3 font-medium">Site</th>
-              <th className="p-3 font-medium text-right">Stock</th>
-              <th className="p-3 font-medium text-right">Seuil</th>
-              <th className="p-3 font-medium text-right">Prix unit.</th>
-              <th className="p-3 font-medium text-center">Ajuster</th>
+              <th className="p-3 font-medium">{t("inv.product")}</th>
+              <th className="p-3 font-medium">{t("common.site")}</th>
+              <th className="p-3 font-medium text-right">{t("inv.stock")}</th>
+              <th className="p-3 font-medium text-right">{t("inv.threshold")}</th>
+              <th className="p-3 font-medium text-right">{t("inv.unit_price")}</th>
+              <th className="p-3 font-medium text-center">{t("inv.adjust")}</th>
               <th className="p-3 font-medium"></th>
             </tr>
           </thead>
@@ -75,7 +77,7 @@ export default function Inventory() {
             {produits.map((p) => (
               <tr key={p.id} className={`border-t border-slate-100 ${bas(p) ? "bg-amber-50" : ""}`}>
                 <td className="p-3 font-medium text-slate-700">
-                  {p.nom} {bas(p) && <span className="text-amber-600 text-xs">(bas)</span>}
+                  {p.nom} {bas(p) && <span className="text-amber-600 text-xs">⚠</span>}
                 </td>
                 <td className="p-3 text-slate-500">{nomSite(p.site_id)}</td>
                 <td className="p-3 text-right">{p.quantite} {p.unite}</td>
@@ -91,12 +93,12 @@ export default function Inventory() {
                   <button onClick={() => bouger(p.id, 10)} className="px-2 h-7 rounded bg-slate-100 ml-1 text-xs">+10</button>
                 </td>
                 <td className="p-3 text-right">
-                  <button onClick={() => supprimer(p.id)} className="text-sm text-red-600">Retirer</button>
+                  <button onClick={() => supprimer(p.id)} className="text-sm text-red-600">{t("common.remove")}</button>
                 </td>
               </tr>
             ))}
             {produits.length === 0 && (
-              <tr><td className="p-3 text-slate-400" colSpan={7}>Aucun produit.</td></tr>
+              <tr><td className="p-3 text-slate-400" colSpan={7}>{t("inv.empty")}</td></tr>
             )}
           </tbody>
         </table>
@@ -104,17 +106,17 @@ export default function Inventory() {
 
       {/* Ajouter un produit */}
       <div className="bg-white rounded-2xl shadow-sm p-4 max-w-3xl">
-        <h2 className="font-semibold text-slate-800 mb-2">Ajouter un produit</h2>
+        <h2 className="font-semibold text-slate-800 mb-2">{t("inv.add_product")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
-          <input className="border rounded px-2 py-1" placeholder="Nom"
+          <input className="border rounded px-2 py-1" placeholder={t("inv.name")}
             value={nouveau.nom} onChange={(e) => setNouveau({ ...nouveau, nom: e.target.value })} />
-          <input className="border rounded px-2 py-1" placeholder="Unité (L, kg…)"
+          <input className="border rounded px-2 py-1" placeholder={t("inv.unit")}
             value={nouveau.unite} onChange={(e) => setNouveau({ ...nouveau, unite: e.target.value })} />
-          <input type="number" className="border rounded px-2 py-1" placeholder="Quantité"
+          <input type="number" className="border rounded px-2 py-1" placeholder={t("inv.quantity")}
             value={nouveau.quantite} onChange={(e) => setNouveau({ ...nouveau, quantite: e.target.value })} />
-          <input type="number" className="border rounded px-2 py-1" placeholder="Seuil"
+          <input type="number" className="border rounded px-2 py-1" placeholder={t("inv.threshold")}
             value={nouveau.seuil_alerte} onChange={(e) => setNouveau({ ...nouveau, seuil_alerte: e.target.value })} />
-          <input type="number" step="0.01" className="border rounded px-2 py-1" placeholder="Prix unit. (DH)"
+          <input type="number" step="0.01" className="border rounded px-2 py-1" placeholder={`${t("inv.unit_price")} (DH)`}
             value={nouveau.prix_unitaire} onChange={(e) => setNouveau({ ...nouveau, prix_unitaire: e.target.value })} />
           <select className="border rounded px-2 py-1" value={nouveau.site_id}
             onChange={(e) => setNouveau({ ...nouveau, site_id: e.target.value })}>
@@ -124,7 +126,7 @@ export default function Inventory() {
         </div>
         <button onClick={ajouter} disabled={!nouveau.nom}
           className="mt-3 bg-slate-900 text-white px-4 py-1.5 rounded disabled:opacity-40">
-          Ajouter
+          {t("common.add")}
         </button>
       </div>
     </div>

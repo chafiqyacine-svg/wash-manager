@@ -1,9 +1,11 @@
 import { Fragment, useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import { useI18n } from "../context/I18nContext.jsx";
 
 // Marge par forfait : prix de vente − coût des consommables (recette × prix unitaire).
 // Le coût dépend des produits du site sélectionné.
 export default function Marges() {
+  const { t } = useI18n();
   const [sites, setSites] = useState([]);
   const [siteId, setSiteId] = useState("");
   const [marges, setMarges] = useState([]);
@@ -24,27 +26,24 @@ export default function Marges() {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold text-slate-800">Marge par forfait</h1>
+        <h1 className="text-2xl font-bold text-slate-800">{t("marges.title")}</h1>
         <select value={siteId} onChange={(e) => setSiteId(e.target.value)}
           className="border rounded-lg px-3 py-2 bg-white text-sm">
-          <option value="">Tous les sites</option>
+          <option value="">{t("common.all_sites")}</option>
           {sites.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
         </select>
       </div>
-      <p className="text-sm text-slate-500 mb-4">
-        Coût = somme des consommables par lavage (prix unitaire ÷ lavages par unité).
-        Renseignez les prix unitaires dans l'Inventaire et les recettes dans les Réglages.
-      </p>
+      <p className="text-sm text-slate-500 mb-4">{t("marges.subtitle")}</p>
 
       <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-slate-400 text-left">
             <tr>
-              <th className="p-3 font-medium">Forfait</th>
-              <th className="p-3 font-medium text-right">Prix</th>
-              <th className="p-3 font-medium text-right">Coût produits</th>
-              <th className="p-3 font-medium text-right">Marge</th>
-              <th className="p-3 font-medium text-right">Taux</th>
+              <th className="p-3 font-medium">{t("marges.forfait")}</th>
+              <th className="p-3 font-medium text-right">{t("marges.price")}</th>
+              <th className="p-3 font-medium text-right">{t("marges.cost")}</th>
+              <th className="p-3 font-medium text-right">{t("marges.margin")}</th>
+              <th className="p-3 font-medium text-right">{t("marges.rate")}</th>
               <th className="p-3 font-medium"></th>
             </tr>
           </thead>
@@ -63,7 +62,7 @@ export default function Marges() {
                     {m.detail.length > 0 && (
                       <button className="text-xs text-blue-600"
                         onClick={() => setOuvert(ouvert === m.forfait_id ? null : m.forfait_id)}>
-                        {ouvert === m.forfait_id ? "Masquer" : `Détail (${m.detail.length})`}
+                        {ouvert === m.forfait_id ? t("common.hide") : `${t("common.detail")} (${m.detail.length})`}
                       </button>
                     )}
                   </td>
@@ -79,7 +78,7 @@ export default function Marges() {
               </Fragment>
             ))}
             {marges.length === 0 && (
-              <tr><td className="p-3 text-slate-400" colSpan={6}>Aucun forfait.</td></tr>
+              <tr><td className="p-3 text-slate-400" colSpan={6}>{t("marges.empty")}</td></tr>
             )}
           </tbody>
         </table>

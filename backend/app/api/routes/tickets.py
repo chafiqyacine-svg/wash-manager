@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
-from app.models import Forfait, Ticket, Transaction
+from app.models import Forfait, Ticket, Transaction, Utilisateur
 from app.schemas.ticket import TicketCreate, TicketOut
 from app.services.ingestion import finaliser_transaction
 
@@ -19,16 +19,21 @@ router = APIRouter(prefix="/tickets", tags=["caisse"],
 
 
 @router.post("", response_model=TicketOut, status_code=status.HTTP_201_CREATED)
-def creer_ticket(payload: TicketCreate, db: Session = Depends(get_db)) -> Ticket:
+def creer_ticket(payload: TicketCreate, db: Session = Depends(get_db),
+                 user: Utilisateur = Depends(get_current_user)) -> Ticket:
     forfait = db.get(Forfait, payload.forfait_id)
     if forfait is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Forfait inconnu")
+    # Site d'encaissement : celui du caissier rattaché, sinon celui saisi.
+    site_id = user.site_id if (user.role != "admin" and user.site_id) else payload.site_id
     ticket = Ticket(
         forfait_id=forfait.id,
         prix=forfait.prix,
         plaque=payload.plaque,
         employe_id=payload.employe_id,
         reference=payload.reference,
+        mode_paiement=payload.mode_paiement or "espece",
+        site_id=site_id,
         statut="ouvert",
     )
     db.add(ticket)

@@ -3,9 +3,16 @@ import { api } from "../api/client.js";
 
 // Caisse intégrée : l'opérateur crée un ticket à chaque encaissement.
 // Remplace un POS externe et fournit le « forfait payé » pour le rapprochement.
+const MODES = [
+  { val: "espece", label: "Espèces" },
+  { val: "carte", label: "Carte" },
+  { val: "autre", label: "Autre" },
+];
+
 export default function Caisse() {
   const [forfaits, setForfaits] = useState([]);
   const [plaque, setPlaque] = useState("");
+  const [mode, setMode] = useState("espece");
   const [message, setMessage] = useState("");
   const [tickets, setTickets] = useState([]);
 
@@ -19,8 +26,8 @@ export default function Caisse() {
   const encaisser = async (forfait) => {
     setMessage("");
     try {
-      await api.creerTicket({ forfait_id: forfait.id, plaque: plaque || null });
-      setMessage(`Ticket ${forfait.nom} créé.`);
+      await api.creerTicket({ forfait_id: forfait.id, plaque: plaque || null, mode_paiement: mode });
+      setMessage(`Ticket ${forfait.nom} créé (${MODES.find((m) => m.val === mode).label}).`);
       setPlaque("");
       rafraichir();
     } catch {
@@ -40,6 +47,21 @@ export default function Caisse() {
           value={plaque}
           onChange={(e) => setPlaque(e.target.value)}
         />
+        <label className="text-sm text-slate-500">Mode de paiement</label>
+        <div className="flex gap-2 mb-4 mt-1">
+          {MODES.map((m) => (
+            <button
+              key={m.val}
+              onClick={() => setMode(m.val)}
+              className={`flex-1 px-3 py-2 rounded text-sm border ${
+                mode === m.val ? "bg-blue-50 border-blue-400 text-blue-700 font-medium"
+                  : "bg-white text-slate-500"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
         <div className="grid grid-cols-1 gap-2">
           {forfaits.map((f) => (
             <button

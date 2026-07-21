@@ -10,6 +10,8 @@ class TicketCreate(BaseModel):
     plaque: str | None = None      # facultatif mais recommandé (meilleur rapprochement)
     employe_id: int | None = None  # caissier
     reference: str | None = None
+    mode_paiement: str = "espece"  # espece / carte / autre
+    site_id: int | None = None     # à défaut, le site du caissier connecté
 
 
 class TicketOut(BaseModel):
@@ -21,6 +23,8 @@ class TicketOut(BaseModel):
     plaque: str | None
     employe_id: int | None
     reference: str | None
+    mode_paiement: str
+    site_id: int | None
     heure: datetime
     statut: str
     transaction_id: int | None

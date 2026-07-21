@@ -13,6 +13,7 @@ const MENU = [
   { to: "/pointage", key: "nav.pointage", icon: "📸" },
   { to: "/presence", key: "nav.presence", icon: "🕒" },
   { to: "/payments", key: "nav.payments", icon: "💲" },
+  { to: "/cloture", key: "nav.cloture", icon: "🧮" },
   { to: "/inventory", key: "nav.inventory", icon: "📦" },
   { to: "/marges", key: "nav.marges", icon: "💰" },
   { to: "/anomalies", key: "nav.anomalies", icon: "⚠️" },

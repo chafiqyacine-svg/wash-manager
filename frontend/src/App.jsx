@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import Anomalies from "./pages/Anomalies.jsx";
 import Bays from "./pages/Bays.jsx";
 import Caisse from "./pages/Caisse.jsx";
+import Cloture from "./pages/Cloture.jsx";
 import Config from "./pages/Config.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Employees from "./pages/Employees.jsx";
@@ -59,6 +60,7 @@ export default function App() {
                 <Route path="/bays" element={<Bays />} />
                 <Route path="/queue" element={<Queue />} />
                 <Route path="/payments" element={<Payments />} />
+                <Route path="/cloture" element={<Cloture />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/marges" element={<Marges />} />
                 <Route path="/vehicules" element={<Vehicules />} />

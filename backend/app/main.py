@@ -11,6 +11,7 @@ from app.api.routes import (
     anomalies,
     auth,
     bays,
+    cloture,
     dashboard,
     employes,
     events,
@@ -69,6 +70,7 @@ app.include_router(bays.router, prefix=API_PREFIX)
 app.include_router(horaires.router, prefix=API_PREFIX)
 app.include_router(queue.router, prefix=API_PREFIX)
 app.include_router(payments.router, prefix=API_PREFIX)
+app.include_router(cloture.router, prefix=API_PREFIX)
 app.include_router(pointage.router, prefix=API_PREFIX)
 app.include_router(produits.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)

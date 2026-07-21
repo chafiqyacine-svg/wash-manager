@@ -129,4 +129,19 @@ export const api = {
     request(`/parametres/${cle}`, { method: "PUT", body: { valeur } }),
   vehicules: (plaque = "") => request(`/vehicules${plaque ? `?plaque=${plaque}` : ""}`),
   rapports: () => request("/rapports"),
+  // Clôture de caisse (rapport Z)
+  clotureApercu: (jour, siteId) =>
+    request(`/cloture/apercu?jour=${jour}${siteId ? `&site_id=${siteId}` : ""}`),
+  cloturer: (payload) => request("/cloture", { method: "POST", body: payload }),
+  clotures: (siteId) => request(`/cloture${siteId ? `?site_id=${siteId}` : ""}`),
+  // Télécharge le PDF (endpoint protégé : on passe le token puis on ouvre le blob).
+  async telechargerCloturePdf(id) {
+    const headers = {};
+    const t = getToken();
+    if (t) headers["Authorization"] = `Bearer ${t}`;
+    const res = await fetch(`${BASE}/cloture/${id}/pdf`, { headers });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const blob = await res.blob();
+    window.open(URL.createObjectURL(blob), "_blank");
+  },
 };

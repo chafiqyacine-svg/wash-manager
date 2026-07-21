@@ -29,6 +29,11 @@ class Ticket(Base):
     employe_id: Mapped[int | None] = mapped_column(ForeignKey("employes.id"))
     reference: Mapped[str | None] = mapped_column(String(64))  # n° de ticket libre
 
+    # Mode d'encaissement (espece / carte / autre) — sert à la clôture de caisse.
+    mode_paiement: Mapped[str] = mapped_column(String(16), default="espece")
+    # Site d'encaissement (pour la clôture par site).
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("sites.id"), index=True)
+
     heure: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # ouvert -> rapproché (associé à une transaction) | annule

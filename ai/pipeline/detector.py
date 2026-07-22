@@ -14,6 +14,8 @@ from dataclasses import dataclass
 
 # Classes COCO correspondant à des véhicules.
 CLASSES_VEHICULE = {"car", "truck", "bus", "motorcycle"}
+# Classe COCO d'une personne (laveur) — sert à l'identification par gilet.
+CLASSES_PERSONNE = {"person"}
 
 
 @dataclass
@@ -51,3 +53,7 @@ class Detector:
 
     def detect_vehicules(self, image) -> list[Detection]:
         return self.detect(image, classes=CLASSES_VEHICULE)
+
+    def detect_personnes(self, image) -> list[Detection]:
+        """Détecte les personnes (laveurs) — pour l'identification par gilet."""
+        return self.detect(image, classes=CLASSES_PERSONNE)

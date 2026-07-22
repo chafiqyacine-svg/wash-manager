@@ -27,6 +27,12 @@ cameras:
     zone_code: "B"          # lavage extérieur
     source: "rtsp://user:pass@192.168.1.11:554/stream1"
     polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]  # TODO(dev): calibrer
+    # Identification du laveur par gilet : détecte la personne au poste et
+    # émet sa couleur de gilet (rapprochée de l'employé côté backend).
+    detecter_gilet: true
+    # Couleurs enregistrées des gilets (doivent matcher Employe.couleur_gilet).
+    # TODO(dev): charger dynamiquement depuis GET /api/v1/employes au démarrage.
+    palette_gilets: ["#E11D48", "#2563EB", "#059669"]
 
   - id: "cam_aspiration"
     role: "zone"

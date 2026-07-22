@@ -14,6 +14,7 @@ from pipeline.detector import Detector
 from pipeline.events import Event, EventClient, EventType
 from pipeline.lpr import LecteurPlaque
 from pipeline.tracker import Tracker
+from pipeline.vest import bbox_la_plus_proche, couleur_dominante, snap_couleur
 from pipeline.zones import DetecteurLigne, DetecteurZone
 
 
@@ -52,6 +53,12 @@ class CameraWorker:
         )
         self.zone_code = cam_config.get("zone_code")
 
+        # Identification du laveur par gilet (caméras de zone uniquement).
+        # `palette_gilets` = couleurs enregistrées des employés ("#RRGGBB"),
+        # utilisées pour ramener la couleur mesurée à une valeur canonique.
+        self.detecter_gilet = bool(cam_config.get("detecter_gilet", False))
+        self.palette_gilets = cam_config.get("palette_gilets", [])
+
     def traiter_frame(self, image) -> None:
         """Traite une frame : détecte+suit, évalue zones/lignes, émet events."""
         tracks = self.tracker.update(image)  # détection + suivi (ByteTrack)
@@ -70,8 +77,33 @@ class CameraWorker:
                 transition = self.zone.maj(track.track_id, point)
                 if transition == "enter":
                     self._emit(EventType.ZONE_ENTER, track.track_id, zone=self.zone_code)
+                    self._identifier_laveur(track.track_id, point, image)
                 elif transition == "exit":
                     self._emit(EventType.ZONE_EXIT, track.track_id, zone=self.zone_code)
+
+    def _identifier_laveur(self, track_id: str, vehicule_point, image) -> None:
+        """À l'entrée d'un véhicule en zone, identifie le laveur par la couleur
+        de son gilet et émet un événement BADGE (couleur_gilet) que le backend
+        rapproche de l'employé.
+
+        On associe au véhicule la personne la plus proche (celle qui le lave),
+        on mesure la couleur dominante de son torse, puis on la ramène à une
+        couleur enregistrée (`snap_couleur`) pour que le rapprochement backend
+        (exact) fonctionne malgré le bruit de mesure.
+        """
+        if not self.detecter_gilet:
+            return
+        personnes = self.detector.detect_personnes(image)
+        idx = bbox_la_plus_proche(vehicule_point, [p.bbox for p in personnes])
+        if idx is None:
+            return
+        rgb = couleur_dominante(image, personnes[idx].bbox)
+        couleur = snap_couleur(rgb, self.palette_gilets) if self.palette_gilets \
+            else None
+        if couleur is None:
+            # TODO(dev): pas de correspondance -> journaliser (laveur non identifié).
+            return
+        self._emit(EventType.BADGE, track_id, couleur_gilet=couleur)
 
     def _lire_et_emettre_plaque(self, track_id: str, image) -> None:
         if self.lpr is None:

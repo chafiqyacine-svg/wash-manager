@@ -3,7 +3,15 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from app.models import Anomalie, ForfaitProduit, Produit, Ticket, Transaction, Vehicule
+from app.models import (
+    Anomalie,
+    Employe,
+    ForfaitProduit,
+    Produit,
+    Ticket,
+    Transaction,
+    Vehicule,
+)
 from app.models.enums import AnomalieType
 from app.schemas.event import EventIn, EventType
 from app.services.ingestion import consommer_inventaire, finaliser_transaction, traiter_evenement
@@ -69,6 +77,29 @@ def test_forfait_non_respecte(db, ref):
     types = {a.type for a in db.query(Anomalie).filter(Anomalie.transaction_id == txn.id)}
     assert AnomalieType.FORFAIT_NON_RESPECTE.value in types
     assert txn.conforme is False
+
+
+def test_identification_employe_par_gilet(db, ref):
+    """Événement BADGE porteur de couleur_gilet → l'employé est rattaché à la txn.
+
+    Reproduit le flux edge : l'orchestrateur émet la couleur canonique, le
+    backend la rapproche (exact) de l'employé au gilet correspondant.
+    """
+    emp = Employe(nom="Karim", site_id=ref["site1"].id, couleur_gilet="#E11D48")
+    db.add(emp); db.commit()
+
+    traiter_evenement(db, _ev(EventType.ENTREE, "v9"))
+    traiter_evenement(db, _ev(EventType.BADGE, "v9", couleur_gilet="#E11D48"))
+    txn = _active(db, "v9")
+    assert txn.employe_id == emp.id
+
+
+def test_gilet_inconnu_nassocie_personne(db, ref):
+    db.add(Employe(nom="Karim", site_id=ref["site1"].id, couleur_gilet="#E11D48"))
+    db.commit()
+    traiter_evenement(db, _ev(EventType.ENTREE, "v10"))
+    traiter_evenement(db, _ev(EventType.BADGE, "v10", couleur_gilet="#000000"))
+    assert _active(db, "v10").employe_id is None
 
 
 def test_consommation_stock_idempotente(db, ref):

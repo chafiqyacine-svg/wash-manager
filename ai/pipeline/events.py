@@ -8,8 +8,12 @@ import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import httpx
+
+if TYPE_CHECKING:
+    from pipeline.outbox import Outbox
 
 
 class EventType(str, Enum):
@@ -42,23 +46,57 @@ class Event:
 
 
 class EventClient:
-    """Envoie les événements au backend avec la clé d'ingestion."""
+    """Envoie les événements au backend avec la clé d'ingestion.
 
-    def __init__(self, events_url: str, api_key: str | None = None) -> None:
+    Si un `outbox` est fourni, l'envoi devient DURABLE : chaque événement est
+    d'abord persisté localement puis retiré une fois acquitté. Rien n'est perdu
+    en cas de coupure réseau, et l'ordre (FIFO) est préservé.
+    """
+
+    def __init__(self, events_url: str, api_key: str | None = None,
+                 outbox: "Outbox | None" = None) -> None:
         self.events_url = events_url
         self.api_key = api_key or os.getenv("AI_INGEST_API_KEY", "")
         self._client = httpx.Client(timeout=5)
+        self.outbox = outbox
 
-    def send(self, event: Event) -> bool:
-        headers = {"X-AI-Key": self.api_key}
+    def _post(self, payload: dict) -> bool:
+        """POST unitaire d'un payload déjà sérialisé. True si acquitté."""
         try:
-            resp = self._client.post(self.events_url, json=event.to_payload(), headers=headers)
+            resp = self._client.post(
+                self.events_url, json=payload, headers={"X-AI-Key": self.api_key}
+            )
             resp.raise_for_status()
             return True
         except httpx.HTTPError:
-            # TODO(dev): file de retry locale (SQLite/queue) en cas de coupure réseau
-            #   pour ne perdre aucun événement.
             return False
+
+    def send(self, event: Event) -> bool:
+        """Envoie un événement. Avec outbox : persiste puis draine la file."""
+        payload = event.to_payload()
+        if self.outbox is None:
+            return self._post(payload)
+        # Durable : on empile d'abord (aucune perte), puis on tente de vider.
+        self.outbox.ajouter(payload)
+        self.flush()
+        return True
+
+    def flush(self) -> int:
+        """Renvoie les événements en attente dans l'ordre. S'arrête au 1er échec
+        (réseau encore coupé) pour préserver l'ordre FIFO. Renvoie le nombre
+        d'événements acquittés.
+        """
+        if self.outbox is None:
+            return 0
+        envoyes = 0
+        for id_, payload in self.outbox.en_attente():
+            if self._post(payload):
+                self.outbox.supprimer(id_)
+                envoyes += 1
+            else:
+                self.outbox.incrementer_essai(id_)
+                break  # réseau toujours indisponible : on réessaiera plus tard
+        return envoyes
 
     def charger_palette_gilets(self, site_id: int | None = None) -> list[str]:
         """Récupère les couleurs de gilet enregistrées auprès du backend.

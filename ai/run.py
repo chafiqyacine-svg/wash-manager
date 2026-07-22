@@ -18,6 +18,7 @@ from pipeline.detector import Detector
 from pipeline.events import EventClient
 from pipeline.lpr import LecteurPlaque
 from pipeline.orchestrator import CameraWorker
+from pipeline.outbox import Outbox
 from pipeline.tracker import Tracker
 
 
@@ -44,9 +45,11 @@ def main() -> None:
 
     cfg = charger_config(args.config)
 
-    # Client backend
+    # Client backend, avec file locale durable (aucun événement perdu si le
+    # réseau tombe). Chemin de la file configurable (défaut : outbox.db local).
     api_key = os.getenv(cfg["backend"].get("api_key_env", "AI_INGEST_API_KEY"), "")
-    client = EventClient(cfg["backend"]["events_url"], api_key)
+    outbox = Outbox(cfg["backend"].get("outbox_path", "outbox.db"))
+    client = EventClient(cfg["backend"]["events_url"], api_key, outbox=outbox)
 
     # Palette de gilets : chargée dynamiquement depuis le backend (source de
     # vérité = employés enregistrés), sauf si la caméra en fige une en config.
@@ -73,7 +76,12 @@ def main() -> None:
     # TODO(dev): pour chaque worker, ouvrir CameraStream(cam.source) et lancer
     #   un thread qui appelle worker.traiter_frame(frame.image) sur chaque frame.
     #   Gérer l'arrêt propre (SIGINT) et la supervision des threads.
+    # TODO(dev): lancer un thread périodique qui appelle client.flush() (ex.
+    #   toutes les 5 s) pour vider l'outbox même sans nouvel événement (reprise
+    #   après coupure réseau prolongée).
+    en_attente = outbox.taille()
     print(f"{len(workers)} worker(s) caméra initialisé(s). "
+          f"File locale : {en_attente} événement(s) en attente. "
           f"Brancher les boucles de frames (TODO(dev)).")
 
 

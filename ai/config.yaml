@@ -5,6 +5,7 @@
 backend:
   events_url: "http://backend:8000/api/v1/events"
   api_key_env: "AI_INGEST_API_KEY"   # la clé est lue depuis l'environnement
+  outbox_path: "outbox.db"           # file locale durable (aucun événement perdu)
 
 models:
   vehicule_detector: "ai/models/yolo_vehicules.pt"   # TODO(dev): fournir les poids

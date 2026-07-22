@@ -11,7 +11,7 @@ from pipeline.events import Event, EventType
 # Champs acceptés par backend/app/schemas/event.py::EventIn (source de vérité).
 # À mettre à jour EN MIROIR si le schéma backend change.
 CHAMPS_BACKEND = {
-    "type", "track_id", "camera_id", "zone", "timestamp",
+    "type", "event_id", "track_id", "camera_id", "zone", "timestamp",
     "plaque", "plaque_confiance", "badge_nfc_id", "couleur_gilet",
     "photo", "meta",
 }
@@ -39,3 +39,10 @@ def test_to_payload_omet_les_none():
     payload = ev.to_payload()
     assert "plaque" not in payload and "zone" not in payload
     assert payload["type"] == "sortie"
+
+
+def test_event_id_genere_et_unique():
+    a = Event(type=EventType.ENTREE, track_id="v1")
+    b = Event(type=EventType.ENTREE, track_id="v1")
+    assert a.event_id and b.event_id and a.event_id != b.event_id
+    assert a.to_payload()["event_id"] == a.event_id

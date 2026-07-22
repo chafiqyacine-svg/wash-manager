@@ -79,6 +79,39 @@ def test_forfait_non_respecte(db, ref):
     assert txn.conforme is False
 
 
+def test_evenement_reLivre_est_idempotent(db, ref):
+    """Une re-livraison (même event_id) ne doit PAS créer de doublon.
+
+    Reproduit le cas outbox : l'ack d'un POST a été perdu, l'edge renvoie le
+    même événement. Ici une ENTREE dupliquée ne crée qu'une transaction.
+    """
+    ev = EventIn(type=EventType.ENTREE, track_id="v1", event_id="evt-123",
+                 timestamp=datetime.now(timezone.utc))
+    traiter_evenement(db, ev)
+    traiter_evenement(db, ev)   # re-livraison exacte
+    n = db.query(Transaction).filter(Transaction.track_id == "v1").count()
+    assert n == 1
+
+
+def test_plaque_reLivree_ne_double_pas_les_visites(db, ref):
+    traiter_evenement(db, _ev(EventType.ENTREE, "v2"))
+    plaque_ev = EventIn(type=EventType.PLAQUE, track_id="v2", event_id="evt-plaque",
+                        plaque="12345-A-67", plaque_confiance=0.9,
+                        timestamp=datetime.now(timezone.utc))
+    traiter_evenement(db, plaque_ev)
+    traiter_evenement(db, plaque_ev)   # doublon
+    veh = db.scalar(select(Vehicule).where(Vehicule.plaque == "12345-A-67"))
+    assert veh.nombre_visites == 1     # compté une seule fois
+
+
+def test_sans_event_id_pas_de_dedup(db, ref):
+    """Rétrocompat : sans event_id, chaque événement est traité (comme avant)."""
+    traiter_evenement(db, _ev(EventType.ENTREE, "v3"))
+    traiter_evenement(db, _ev(EventType.ENTREE, "v3"))
+    n = db.query(Transaction).filter(Transaction.track_id == "v3").count()
+    assert n == 2
+
+
 def test_track_id_reutilise_cible_la_transaction_recente(db, ref):
     """Deux 'en_cours' avec le même track_id (SORTIE manquée + réattribution) :
     les événements suivants ciblent la transaction la PLUS RÉCENTE."""

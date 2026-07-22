@@ -3,6 +3,7 @@ from app.models.anomalie import Anomalie
 from app.models.bay import Bay
 from app.models.cloture import ClotureCaisse
 from app.models.employe import Employe
+from app.models.evenement_traite import EvenementTraite
 from app.models.enums import (
     AnomalieSeverite,
     AnomalieType,
@@ -29,6 +30,7 @@ __all__ = [
     "Bay",
     "ClotureCaisse",
     "Employe",
+    "EvenementTraite",
     "Forfait",
     "ForfaitProduit",
     "HoraireEmploye",

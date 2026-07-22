@@ -5,6 +5,7 @@ DOIT rester synchronisé avec `backend/app/schemas/event.py`.
 from __future__ import annotations
 
 import os
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -29,6 +30,9 @@ class EventType(str, Enum):
 class Event:
     type: EventType
     track_id: str
+    # Identifiant unique : permet au backend d'ignorer une re-livraison (outbox)
+    # sans appliquer l'événement deux fois (idempotence).
+    event_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     camera_id: str | None = None
     zone: str | None = None

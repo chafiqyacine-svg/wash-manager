@@ -25,6 +25,9 @@ class EventType(str, Enum):
 class EventIn(BaseModel):
     """Événement unitaire émis par le pipeline IA."""
     type: EventType
+    event_id: str | None = Field(
+        None, description="Identifiant unique de l'événement (idempotence des re-livraisons)"
+    )
     track_id: str = Field(..., description="Identifiant de suivi du véhicule (tracker)")
     camera_id: str | None = Field(None, description="Caméra source")
     zone: str | None = Field(None, description="Code zone A-E (pour zone_enter/zone_exit)")

@@ -16,6 +16,7 @@ Reste en TODO(dev) : la résolution employé par badge NFC, l'idempotence des
 from datetime import date, datetime, time, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 
@@ -31,6 +32,7 @@ from app.models import (
     Anomalie,
     Bay,
     Employe,
+    EvenementTraite,
     Forfait,
     ForfaitProduit,
     HoraireSite,
@@ -52,7 +54,14 @@ from app.services.reconciliation import (
 
 
 def traiter_evenement(db: Session, event: EventIn) -> Transaction | None:
-    """Point d'entrée unique appelé par la route /events."""
+    """Point d'entrée unique appelé par la route /events.
+
+    Idempotent : un événement déjà traité (même `event_id`, cas d'une re-livraison
+    par la file locale de l'edge) est ignoré sans effet de bord.
+    """
+    if event.event_id and _deja_traite(db, event.event_id):
+        return _derniere_transaction(db, event.track_id)
+
     handler = {
         EventType.ENTREE: _on_entree,
         EventType.PLAQUE: _on_plaque,
@@ -62,8 +71,31 @@ def traiter_evenement(db: Session, event: EventIn) -> Transaction | None:
         EventType.SORTIE: _on_sortie,
     }[event.type]
     txn = handler(db, event)
-    db.commit()
+
+    if event.event_id:
+        db.add(EvenementTraite(event_id=event.event_id, type=event.type.value,
+                               track_id=event.track_id))
+    try:
+        db.commit()
+    except IntegrityError:
+        # Doublon concurrent (même event_id inséré en parallèle) : on ignore.
+        db.rollback()
+        return _derniere_transaction(db, event.track_id)
     return txn
+
+
+def _deja_traite(db: Session, event_id: str) -> bool:
+    return db.scalar(
+        select(EvenementTraite.id).where(EvenementTraite.event_id == event_id)
+    ) is not None
+
+
+def _derniere_transaction(db: Session, track_id: str) -> Transaction | None:
+    """Transaction la plus récente d'un track_id (tous statuts) — pour l'accusé."""
+    return db.scalar(
+        select(Transaction).where(Transaction.track_id == track_id)
+        .order_by(Transaction.id.desc())
+    )
 
 
 def _get_transaction_active(db: Session, track_id: str) -> Transaction | None:

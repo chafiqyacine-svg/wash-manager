@@ -14,6 +14,7 @@ import History from "./pages/History.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import LiveView from "./pages/LiveView.jsx";
 import Marges from "./pages/Marges.jsx";
+import Objectifs from "./pages/Objectifs.jsx";
 import Login from "./pages/Login.jsx";
 import Payments from "./pages/Payments.jsx";
 import Pointage from "./pages/Pointage.jsx";
@@ -61,6 +62,7 @@ export default function App() {
                 <Route path="/anomalies" element={<Anomalies />} />
                 <Route path="/cameras" element={<Cameras />} />
                 <Route path="/audit" element={<Audit />} />
+                <Route path="/objectifs" element={<Objectifs />} />
                 <Route path="/bays" element={<Bays />} />
                 <Route path="/queue" element={<Queue />} />
                 <Route path="/payments" element={<Payments />} />

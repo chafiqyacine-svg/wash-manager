@@ -65,6 +65,7 @@ export default function Sidebar() {
       <div className="text-xs text-slate-400 px-3 mb-1">{t("nav.menu")}</div>
       <nav className="space-y-1">
         {MENU.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
+        {estControleur && <Item to="/objectifs" icon="🎯" label={t("nav.objectifs")} />}
         {estControleur && <Item to="/audit" icon="📋" label={t("nav.audit")} />}
         {isAdmin && ADMIN.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
       </nav>

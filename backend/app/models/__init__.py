@@ -17,6 +17,7 @@ from app.models.enums import (
 from app.models.forfait import Forfait
 from app.models.forfait_produit import ForfaitProduit
 from app.models.horaire import HoraireEmploye, HoraireSite
+from app.models.objectif import Objectif
 from app.models.parametre import Parametre
 from app.models.pointage import Pointage
 from app.models.produit import Produit
@@ -39,6 +40,7 @@ __all__ = [
     "ForfaitProduit",
     "HoraireEmploye",
     "HoraireSite",
+    "Objectif",
     "Parametre",
     "Pointage",
     "Produit",

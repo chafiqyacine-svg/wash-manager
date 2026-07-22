@@ -13,6 +13,7 @@ export default {
   "nav.cloture": "Clôture de caisse",
   "nav.inventory": "Inventaire",
   "nav.marges": "Marges",
+  "nav.objectifs": "Objectifs",
   "nav.cameras": "Caméras",
   "nav.anomalies": "Anomalies",
   "nav.history": "Historique",
@@ -106,4 +107,18 @@ export default {
   "audit.action": "Action",
   "audit.detail": "Détail",
   "audit.empty": "Aucune action journalisée.",
+
+  // Objectifs de pilotage
+  "obj.title": "Objectifs & écarts",
+  "obj.subtitle": "Cibles à surveiller et écart du jour par rapport au réel.",
+  "obj.metric": "Indicateur",
+  "obj.target": "Cible",
+  "obj.actual": "Réel",
+  "obj.gap": "Écart",
+  "obj.status": "Statut",
+  "obj.ok": "Atteint",
+  "obj.ko": "Manqué",
+  "obj.add": "Ajouter un objectif",
+  "obj.empty": "Aucun objectif défini.",
+  "obj.missed_warning": "objectif(s) non atteint(s) ce jour.",
 };

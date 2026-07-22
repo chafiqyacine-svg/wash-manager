@@ -120,6 +120,13 @@ export const api = {
   cameras: (siteId) => request(`/cameras${siteId ? `?site_id=${siteId}` : ""}`),
   // Journal d'audit (traçabilité des actions sensibles)
   audit: (action) => request(`/audit${action ? `?action=${encodeURIComponent(action)}` : ""}`),
+  // Objectifs de pilotage (cibles + écarts du jour)
+  objectifsMetriques: () => request("/objectifs/metriques"),
+  objectifs: (siteId) => request(`/objectifs${siteId ? `?site_id=${siteId}` : ""}`),
+  objectifsEvaluation: (jour, siteId) =>
+    request(`/objectifs/evaluation?${jour ? `jour=${jour}&` : ""}${siteId ? `site_id=${siteId}` : ""}`),
+  creerObjectif: (payload) => request("/objectifs", { method: "POST", body: payload }),
+  supprimerObjectif: (id) => request(`/objectifs/${id}`, { method: "DELETE" }),
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),

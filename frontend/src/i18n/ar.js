@@ -12,6 +12,7 @@ export default {
   "nav.cloture": "إغلاق الصندوق",
   "nav.inventory": "المخزون",
   "nav.marges": "الهوامش",
+  "nav.objectifs": "الأهداف",
   "nav.cameras": "الكاميرات",
   "nav.anomalies": "الأعطال",
   "nav.history": "السجل",
@@ -105,4 +106,18 @@ export default {
   "audit.action": "الإجراء",
   "audit.detail": "التفاصيل",
   "audit.empty": "لا توجد إجراءات مسجّلة.",
+
+  // Objectifs de pilotage
+  "obj.title": "الأهداف والفوارق",
+  "obj.subtitle": "الأهداف المراد مراقبتها والفارق اليومي مقارنة بالواقع.",
+  "obj.metric": "المؤشر",
+  "obj.target": "الهدف",
+  "obj.actual": "الواقع",
+  "obj.gap": "الفارق",
+  "obj.status": "الحالة",
+  "obj.ok": "مُحقّق",
+  "obj.ko": "غير مُحقّق",
+  "obj.add": "إضافة هدف",
+  "obj.empty": "لا توجد أهداف محدّدة.",
+  "obj.missed_warning": "هدف (أهداف) غير محقّقة اليوم.",
 };

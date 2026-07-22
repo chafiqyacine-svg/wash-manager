@@ -12,6 +12,7 @@ export default {
   "nav.cloture": "إغلاق الصندوق",
   "nav.inventory": "المخزون",
   "nav.marges": "الهوامش",
+  "nav.cameras": "الكاميرات",
   "nav.anomalies": "الأعطال",
   "nav.history": "السجل",
   "nav.reports": "التقارير",
@@ -80,4 +81,17 @@ export default {
   "cloture.history": "سجل الإغلاقات",
   "cloture.no_history": "لا توجد إغلاقات.",
   "cloture.day": "اليوم",
+
+  // Supervision caméras
+  "cam.title": "الكاميرات",
+  "cam.camera": "الكاميرا",
+  "cam.role": "الدور",
+  "cam.status": "الحالة",
+  "cam.online": "متصلة",
+  "cam.offline": "غير متصلة",
+  "cam.silence": "مدة الصمت",
+  "cam.pending": "في الطابور",
+  "cam.offline_warning": "كاميرا (كاميرات) غير متصلة — المراقبة متوقفة.",
+  "cam.empty": "لا توجد كاميرات معروفة (لم يُستقبل أي إشارة).",
+  "cam.hint": "تُعتبر الكاميرا « غير متصلة » إذا لم تُستقبل أي إشارة منذ ~90 ثانية.",
 };

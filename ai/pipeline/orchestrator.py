@@ -78,12 +78,17 @@ class CameraWorker:
         self.detecter_gilet = bool(cam_config.get("detecter_gilet", False))
         self.palette_gilets = cam_config.get("palette_gilets", [])
 
+        self.site_id = cam_config.get("site_id")
+        self.frames_traitees = 0   # compteur pour le heartbeat de supervision
+        self.events_envoyes = 0
+
     def traiter_frame(self, image) -> None:
         """Traite une frame : détecte+suit, évalue lignes/zones, émet les events.
 
         Uniforme pour tous les rôles : seuls les détecteurs présents s'activent
         (entrée seule, sortie seule, zone(s), ou tout à la fois pour "bay").
         """
+        self.frames_traitees += 1
         tracks = self.tracker.update(image)  # détection + suivi (ByteTrack)
 
         for track in tracks:
@@ -156,7 +161,19 @@ class CameraWorker:
         """
         return f"{self.camera_id}:{track_id}"
 
+    def heartbeat_payload(self, outbox_en_attente: int = 0) -> dict:
+        """Instantané de supervision de cette caméra pour le backend."""
+        return {
+            "camera_id": self.camera_id,
+            "site_id": self.site_id,
+            "role": self.role,
+            "frames_traitees": self.frames_traitees,
+            "events_envoyes": self.events_envoyes,
+            "outbox_en_attente": outbox_en_attente,
+        }
+
     def _emit(self, type_: EventType, track_id: str, **kwargs) -> None:
+        self.events_envoyes += 1
         event = Event(
             type=type_,
             track_id=self._cle_suivi(track_id),

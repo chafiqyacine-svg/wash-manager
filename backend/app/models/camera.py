@@ -1,0 +1,31 @@
+"""Table `cameras` — santé/supervision des caméras du pipeline edge.
+
+Chaque caméra envoie un « heartbeat » périodique (via la clé d'ingestion). On
+mémorise sa dernière apparition et quelques compteurs pour afficher au dashboard
+si elle est EN LIGNE ou HORS LIGNE (utile : une caméra muette = angle mort de
+surveillance). Le statut est calculé (dernière vue récente ou non), pas stocké.
+"""
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.core.database import Base
+
+
+class Camera(Base):
+    __tablename__ = "cameras"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    camera_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("sites.id"), index=True)
+    role: Mapped[str | None] = mapped_column(String(16))
+
+    derniere_vue: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    frames_traitees: Mapped[int] = mapped_column(Integer, default=0)
+    events_envoyes: Mapped[int] = mapped_column(Integer, default=0)
+    outbox_en_attente: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

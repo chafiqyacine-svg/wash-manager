@@ -116,6 +116,8 @@ export const api = {
   supprimerForfait: (id) => request(`/forfaits/${id}`, { method: "DELETE" }),
   // Marge par forfait (coût consommables + rentabilité)
   marges: (siteId) => request(`/marges${siteId ? `?site_id=${siteId}` : ""}`),
+  // Supervision des caméras (santé edge)
+  cameras: (siteId) => request(`/cameras${siteId ? `?site_id=${siteId}` : ""}`),
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),

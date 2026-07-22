@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import Anomalies from "./pages/Anomalies.jsx";
 import Bays from "./pages/Bays.jsx";
 import Caisse from "./pages/Caisse.jsx";
+import Cameras from "./pages/Cameras.jsx";
 import Cloture from "./pages/Cloture.jsx";
 import Config from "./pages/Config.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -57,6 +58,7 @@ export default function App() {
                 <Route path="/live" element={<LiveView />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/anomalies" element={<Anomalies />} />
+                <Route path="/cameras" element={<Cameras />} />
                 <Route path="/bays" element={<Bays />} />
                 <Route path="/queue" element={<Queue />} />
                 <Route path="/payments" element={<Payments />} />

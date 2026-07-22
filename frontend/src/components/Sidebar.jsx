@@ -16,6 +16,7 @@ const MENU = [
   { to: "/cloture", key: "nav.cloture", icon: "🧮" },
   { to: "/inventory", key: "nav.inventory", icon: "📦" },
   { to: "/marges", key: "nav.marges", icon: "💰" },
+  { to: "/cameras", key: "nav.cameras", icon: "📹" },
   { to: "/anomalies", key: "nav.anomalies", icon: "⚠️" },
   { to: "/history", key: "nav.history", icon: "🧾" },
   { to: "/reports", key: "nav.reports", icon: "📊" },

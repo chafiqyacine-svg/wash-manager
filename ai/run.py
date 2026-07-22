@@ -15,7 +15,7 @@ import os
 import yaml
 
 from pipeline.detector import Detector
-from pipeline.events import EventClient, FlushPeriodique
+from pipeline.events import EventClient, FlushPeriodique, Heartbeat
 from pipeline.lpr import LecteurPlaque
 from pipeline.orchestrator import CameraWorker
 from pipeline.outbox import Outbox
@@ -81,6 +81,14 @@ def main() -> None:
                      hysteresis=hysteresis, zone_confirmations=zone_confirmations)
         for cam in cfg["cameras"]
     ]
+
+    # Supervision : chaque caméra signale son état au backend périodiquement.
+    heartbeat = Heartbeat(
+        client,
+        source=lambda: [w.heartbeat_payload(outbox.taille()) for w in workers],
+        intervalle=cfg["backend"].get("heartbeat_intervalle_s", 15.0),
+    )
+    heartbeat.demarrer()  # TODO(dev): heartbeat.arreter() à l'arrêt propre (SIGINT).
 
     # TODO(dev): pour chaque worker, ouvrir CameraStream(cam.source) et lancer
     #   un thread qui appelle worker.traiter_frame(frame.image) sur chaque frame.

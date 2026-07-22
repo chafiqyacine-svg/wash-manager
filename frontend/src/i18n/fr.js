@@ -13,6 +13,7 @@ export default {
   "nav.cloture": "Clôture de caisse",
   "nav.inventory": "Inventaire",
   "nav.marges": "Marges",
+  "nav.cameras": "Caméras",
   "nav.anomalies": "Anomalies",
   "nav.history": "Historique",
   "nav.reports": "Rapports",
@@ -81,4 +82,17 @@ export default {
   "cloture.history": "Historique des clôtures",
   "cloture.no_history": "Aucune clôture.",
   "cloture.day": "Jour",
+
+  // Supervision caméras
+  "cam.title": "Caméras",
+  "cam.camera": "Caméra",
+  "cam.role": "Rôle",
+  "cam.status": "Statut",
+  "cam.online": "En ligne",
+  "cam.offline": "Hors ligne",
+  "cam.silence": "Silence",
+  "cam.pending": "En file",
+  "cam.offline_warning": "caméra(s) hors ligne — surveillance interrompue.",
+  "cam.empty": "Aucune caméra connue (aucun heartbeat reçu).",
+  "cam.hint": "Une caméra est « hors ligne » si aucun signal n'a été reçu depuis ~90 s.",
 };

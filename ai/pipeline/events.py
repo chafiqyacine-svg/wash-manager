@@ -110,6 +110,16 @@ class EventClient:
         except Exception:  # noqa: BLE001 — un flush ne doit jamais tuer le thread
             return 0
 
+    def heartbeat(self, payload: dict) -> bool:
+        """Envoie un signal de vie de caméra au backend (supervision)."""
+        url = self.events_url.rstrip("/") + "/heartbeat"
+        try:
+            resp = self._client.post(url, json=payload, headers={"X-AI-Key": self.api_key})
+            resp.raise_for_status()
+            return True
+        except httpx.HTTPError:
+            return False
+
     def charger_palette_gilets(self, site_id: int | None = None) -> list[str]:
         """Récupère les couleurs de gilet enregistrées auprès du backend.
 
@@ -149,6 +159,46 @@ class FlushPeriodique:
         # wait() renvoie True si arrêt demandé, False au timeout (→ on flush).
         while not self._stop.wait(self.intervalle):
             self.client._tick_flush()
+
+    def arreter(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2)
+
+
+class Heartbeat:
+    """Envoie périodiquement l'état des caméras au backend (supervision).
+
+    `source` est une fonction sans argument renvoyant la liste des payloads
+    heartbeat à envoyer à chaque tick (un par caméra). Thread daemon.
+    """
+
+    def __init__(self, client: EventClient, source, intervalle: float = 15.0) -> None:
+        self.client = client
+        self.source = source
+        self.intervalle = intervalle
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def _tick(self) -> int:
+        """Envoie un heartbeat par caméra ; renvoie le nombre d'envois réussis."""
+        envoyes = 0
+        try:
+            for payload in self.source():
+                if self.client.heartbeat(payload):
+                    envoyes += 1
+        except Exception:  # noqa: BLE001 — la supervision ne doit pas tuer le thread
+            pass
+        return envoyes
+
+    def demarrer(self) -> None:
+        self._tick()  # premier heartbeat immédiat (caméras visibles au démarrage)
+        self._thread = threading.Thread(target=self._boucle, daemon=True)
+        self._thread.start()
+
+    def _boucle(self) -> None:
+        while not self._stop.wait(self.intervalle):
+            self._tick()
 
     def arreter(self) -> None:
         self._stop.set()

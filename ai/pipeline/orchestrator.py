@@ -28,7 +28,8 @@ class CameraWorker:
     """Traite le flux d'UNE caméra selon son rôle."""
 
     def __init__(self, cam_config: dict, detector: Detector, tracker: Tracker,
-                 client: EventClient, lpr: LecteurPlaque | None = None) -> None:
+                 client: EventClient, lpr: LecteurPlaque | None = None,
+                 hysteresis: float = 0.0, zone_confirmations: int = 1) -> None:
         self.cfg = cam_config
         self.detector = detector
         self.tracker = tracker
@@ -38,15 +39,21 @@ class CameraWorker:
         self.role = cam_config["role"]
         self.camera_id = cam_config["id"]
 
+        # Anti-faux-positifs (réglables globalement, cf. section `tracking`).
+        marge = cam_config.get("hysteresis", hysteresis)
+        confirmations = cam_config.get("zone_confirmations", zone_confirmations)
+
         # Détecteurs géométriques selon le rôle. Le rôle "bay" (une caméra par
         # baie, topologie v1 recommandée) cumule entrée + zones + sortie : le
         # track_id reste stable sur tout le parcours du véhicule.
         self.ligne_entree = (
-            DetecteurLigne(*map(tuple, cam_config["ligne_entree"]))
+            DetecteurLigne(*map(tuple, cam_config["ligne_entree"]), marge=marge,
+                           sens=cam_config.get("sens_entree", 0))
             if cam_config.get("ligne_entree") and self.role in ("entree", "bay") else None
         )
         self.ligne_sortie = (
-            DetecteurLigne(*map(tuple, cam_config["ligne_sortie"]))
+            DetecteurLigne(*map(tuple, cam_config["ligne_sortie"]), marge=marge,
+                           sens=cam_config.get("sens_sortie", 0))
             if cam_config.get("ligne_sortie") and self.role in ("sortie", "bay") else None
         )
         # Zones surveillées : une seule (rôle "zone") ou plusieurs (rôle "bay").
@@ -54,12 +61,14 @@ class CameraWorker:
         if self.role == "zone" and cam_config.get("polygone"):
             self.zones.append(
                 (cam_config.get("zone_code"),
-                 DetecteurZone([tuple(p) for p in cam_config["polygone"]]))
+                 DetecteurZone([tuple(p) for p in cam_config["polygone"]],
+                               confirmations=confirmations))
             )
         elif self.role == "bay":
             for z in cam_config.get("zones", []):
                 self.zones.append(
-                    (z["zone_code"], DetecteurZone([tuple(p) for p in z["polygone"]]))
+                    (z["zone_code"], DetecteurZone([tuple(p) for p in z["polygone"]],
+                                                   confirmations=confirmations))
                 )
         self.zone_code = cam_config.get("zone_code")
 

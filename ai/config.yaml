@@ -16,6 +16,11 @@ models:
 tracking:
   type: "bytetrack"   # bytetrack | deepsort
   max_age: 30
+  # Anti-faux-positifs (réduisent les événements parasites à la source) :
+  hysteresis: 0.0          # bande morte autour des lignes (unités de _cote_ligne)
+  zone_confirmations: 1    # frames consécutives avant de valider une entrée/sortie de zone
+  # TODO(dev): calibrer hysteresis (≈ largeur d'un véhicule en px²) et
+  #   zone_confirmations (≈ 2-3) selon la cadence des caméras.
 
 # TOPOLOGIE. Le tracker numérote les véhicules LOCALEMENT et par caméra ; le
 # backend corrèle les événements d'un véhicule par sa clé de suivi (préfixée par

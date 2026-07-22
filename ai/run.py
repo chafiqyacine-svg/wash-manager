@@ -69,10 +69,16 @@ def main() -> None:
     lpr = LecteurPlaque(plaque_detector, cfg["models"]["ocr_lang"])
     # detector.load(); tracker.load(); plaque_detector.load(); lpr.load()
 
-    # Un worker par caméra
+    # Anti-faux-positifs (hystérésis ligne + anti-rebond zone), réglés globalement.
+    trk = cfg.get("tracking", {})
+    hysteresis = trk.get("hysteresis", 0.0)
+    zone_confirmations = trk.get("zone_confirmations", 1)
+
+    # Un worker par caméra. Le LPR est attaché aux caméras qui voient l'entrée.
     workers = [
         CameraWorker(cam, detector, tracker, client,
-                     lpr=lpr if cam["role"] == "entree" else None)
+                     lpr=lpr if cam["role"] in ("entree", "bay") else None,
+                     hysteresis=hysteresis, zone_confirmations=zone_confirmations)
         for cam in cfg["cameras"]
     ]
 

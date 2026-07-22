@@ -29,25 +29,41 @@ def _cote_ligne(p: Point, a: Point, b: Point) -> float:
 class DetecteurLigne:
     """Détecte le franchissement d'une ligne virtuelle par un track donné.
 
-    Mémorise le dernier côté connu de chaque track ; un changement de signe =
-    franchissement.
+    Mémorise le dernier côté *défini* de chaque track ; un changement de côté =
+    franchissement. Deux garde-fous contre les faux positifs :
+
+    - `marge` : bande morte (en unités de `_cote_ligne`) autour de la ligne. Un
+      point trop proche est « indéterminé » : on ne met pas à jour le côté, ce
+      qui évite le clignotement quand un véhicule stationne pile sur la ligne.
+    - `sens` : 0 = tout franchissement ; +1 = ne compter que le passage
+      côté négatif → positif ; -1 = l'inverse. Utile pour ne pas compter une
+      entrée quand un véhicule fait marche arrière au-dessus de la ligne
+      (le sens dépend de la calibration a→b, cf. config).
     """
 
-    def __init__(self, a: Point, b: Point, max_tracks: int = MAX_TRACKS) -> None:
+    def __init__(self, a: Point, b: Point, max_tracks: int = MAX_TRACKS,
+                 marge: float = 0.0, sens: int = 0) -> None:
         self.a = a
         self.b = b
         self.max_tracks = max_tracks
-        self._dernier_cote: dict[str, float] = {}
+        self.marge = marge
+        self.sens = sens
+        self._dernier_cote: dict[str, int] = {}   # dernier côté DÉFINI : -1 / +1
 
     def a_franchi(self, track_id: str, point: Point) -> bool:
         cote = _cote_ligne(point, self.a, self.b)
+        if abs(cote) < self.marge:
+            return False  # dans la bande morte : côté indéterminé, aucun changement
+        signe = 1 if cote > 0 else -1
         precedent = self._dernier_cote.get(track_id)
-        self._dernier_cote[track_id] = cote
+        self._dernier_cote[track_id] = signe
         _borner(self._dernier_cote, self.max_tracks)
-        if precedent is None:
+        if precedent is None or precedent == signe:
             return False
-        # TODO(dev): imposer un seuil sur |cote| pour éviter le bruit près de la ligne.
-        return (precedent < 0 < cote) or (precedent > 0 > cote)
+        if self.sens == 0:
+            return True
+        # Ne compter que le sens demandé (precedent → signe).
+        return (self.sens > 0 and signe > 0) or (self.sens < 0 and signe < 0)
 
 
 def point_dans_polygone(point: Point, polygone: list[Point]) -> bool:
@@ -69,20 +85,33 @@ class DetecteurZone:
     """Suit l'entrée/sortie d'une zone (polygone) pour chaque track.
 
     Retourne un événement "enter" ou "exit" au changement d'état, sinon None.
+
+    `confirmations` : nombre de frames consécutives où l'état candidat doit
+    persister avant de basculer (anti-rebond). 1 = bascule immédiate (défaut) ;
+    >1 filtre les clignotements aux bords du polygone.
     """
 
-    def __init__(self, polygone: list[Point], max_tracks: int = MAX_TRACKS) -> None:
+    def __init__(self, polygone: list[Point], max_tracks: int = MAX_TRACKS,
+                 confirmations: int = 1) -> None:
         self.polygone = polygone
         self.max_tracks = max_tracks
-        self._present: dict[str, bool] = {}
+        self.confirmations = max(1, confirmations)
+        self._present: dict[str, bool] = {}   # état confirmé
+        self._compte: dict[str, int] = {}      # frames consécutives de l'état candidat
 
     def maj(self, track_id: str, point: Point) -> str | None:
         dedans = point_dans_polygone(point, self.polygone)
         avant = self._present.get(track_id, False)
+        if dedans == avant:
+            self._compte[track_id] = 0        # l'état candidat rejoint l'état confirmé
+            return None
+        # L'état candidat diffère : il doit persister `confirmations` frames.
+        compte = self._compte.get(track_id, 0) + 1
+        if compte < self.confirmations:
+            self._compte[track_id] = compte
+            return None
         self._present[track_id] = dedans
+        self._compte[track_id] = 0
         _borner(self._present, self.max_tracks)
-        if dedans and not avant:
-            return "enter"
-        if not dedans and avant:
-            return "exit"
-        return None
+        _borner(self._compte, self.max_tracks)
+        return "enter" if dedans else "exit"

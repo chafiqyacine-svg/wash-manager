@@ -180,3 +180,23 @@ caissier) et un **site**, activer/désactiver. C'est ici qu'on cadre qui voit qu
 4. Les employés **pointent** (arrivée/départ) ; retards/absences remontent en
    **Anomalies**.
 5. Le soir, le **rapport journalier** est généré et envoyé.
+
+## 18. Contrôle & pilotage (nouveautés)
+
+- **Objectifs** : fixez des cibles (CA journalier, taux de conformité, lavages non
+  facturés, véhicules). Le tableau du jour montre *cible vs réel* et signale en
+  rouge les objectifs manqués.
+- **Clôture de caisse** : en fin de journée, comptez les espèces ; le système
+  affiche l'**écart** et archive un PDF (rapport Z). Une clôture par jour et par site.
+- **Alertes** : les anomalies graves et les écarts de caisse déclenchent une
+  notification (WhatsApp/email une fois les canaux configurés ; sinon « simulée »
+  et visible ici). Bouton **Envoyer un test**.
+- **Caméras** : état *en ligne / hors ligne* de chaque caméra. Une caméra muette
+  (surveillance interrompue) apparaît en rouge.
+- **Journal d'audit** : qui a annulé un ticket, changé un prix, résolu une anomalie,
+  clôturé la caisse… avec date et utilisateur.
+- **Export comptable** : téléchargez recettes et clôtures en **CSV** (Excel) sur une
+  période, pour le comptable.
+- **Marges** : coût des consommables et **marge** par forfait et par site.
+- **Langue** : basculez **FR / ع** en haut de la barre latérale (l'arabe passe toute
+  l'interface en droite-à-gauche).

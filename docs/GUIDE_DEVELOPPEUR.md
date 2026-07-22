@@ -214,3 +214,38 @@ les écritures.
 - Un modèle par fichier ; enums centralisés dans `models/enums.py`.
 - Après toute modif de modèle : générer une migration Alembic (ne jamais
   `create_all` en production).
+
+## 15. Modules ajoutés (contrôle & pilotage)
+
+Nouveaux domaines depuis la v1. Chaque fonction suit le même patron :
+`models/` → `services/` → `api/routes/` → migration Alembic → tests → page React.
+
+| Domaine | Modèle | Service | Route(s) | Page |
+|---------|--------|---------|----------|------|
+| Marge par forfait | `Produit.prix_unitaire`, `ForfaitProduit` | `marge.py` | `/marges` | Marges |
+| Clôture de caisse | `ClotureCaisse`, `Ticket.mode_paiement/site_id` | `cloture.py` | `/cloture` | Clôture |
+| Santé caméras | `Camera` | — | `/cameras`, `/events/heartbeat` | Caméras |
+| Journal d'audit | `JournalAudit` | `audit.py` | `/audit` | Journal d'audit |
+| Objectifs & écarts | `Objectif` | `objectifs.py` | `/objectifs` | Objectifs |
+| Alertes | `Notification` | `notifications.py` | `/notifications` | Alertes |
+| Export comptable | — | — | `/export/*.csv` | Export |
+| Idempotence ingestion | `EvenementTraite` | (ingestion) | (`/events`) | — |
+
+Points d'intégration notables :
+- **Alertes** : `notifier_anomalie` est appelé dans `ingestion.finaliser_transaction`
+  pour toute anomalie *haute/critique* ; `notifier` dans la route clôture si écart.
+  Les canaux réels (SMTP, API WhatsApp) sont dans `services/notifications.py`
+  (gated par la config ; statut « simulé » si non configuré). TODO(dev) : envoi en
+  tâche de fond pour ne pas bloquer la requête.
+- **Audit** : `journaliser(db, user, action, …)` instrumente les routes sensibles
+  (annulation/rapprochement ticket, prix forfait, résolution anomalie, clôture,
+  mouvement/suppression de stock).
+- **Idempotence** : `EventIn.event_id` (uuid généré par l'edge) dédUplique les
+  re-livraisons de la file locale ; voir `traiter_evenement`.
+
+## 16. i18n (FR / AR)
+
+`frontend/src/i18n/{fr,ar}.js` (mêmes clés), `context/I18nContext.jsx`
+(`useI18n() → { t, lang, setLang, dir }`), `components/LangSwitcher.jsx`. L'arabe
+bascule `<html dir="rtl">`. Toute nouvelle chaîne : `t("cle")` + les **deux**
+dictionnaires (un contrôle de parité existe : voir `docs/`).

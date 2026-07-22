@@ -30,13 +30,45 @@ def _canaux_configures() -> list[str]:
 
 
 def _envoyer_whatsapp(destinataire: str, sujet: str, message: str) -> bool:
-    # TODO(dev): POST vers settings.whatsapp_api_url avec le token (httpx).
-    return False
+    """POST vers l'API WhatsApp (format type Cloud API). Échec -> False."""
+    if not (settings.whatsapp_api_url and settings.whatsapp_api_token):
+        return False
+    import httpx
+    try:
+        resp = httpx.post(
+            settings.whatsapp_api_url,
+            headers={"Authorization": f"Bearer {settings.whatsapp_api_token}"},
+            json={"messaging_product": "whatsapp", "to": destinataire,
+                  "type": "text", "text": {"body": f"{sujet}\n{message}"}},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return True
+    except Exception:  # noqa: BLE001 — l'échec d'envoi ne doit pas casser l'appelant
+        return False
 
 
 def _envoyer_email(destinataire: str, sujet: str, message: str) -> bool:
-    # TODO(dev): envoyer via smtplib (settings.smtp_*).
-    return False
+    """Envoi SMTP (STARTTLS si identifiants). Échec -> False."""
+    if not settings.smtp_host:
+        return False
+    import smtplib
+    from email.message import EmailMessage
+    msg = EmailMessage()
+    msg["From"] = settings.smtp_from
+    msg["To"] = destinataire
+    msg["Subject"] = sujet
+    msg.set_content(message)
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as serveur:
+            serveur.starttls()
+            if settings.smtp_user:
+                serveur.login(settings.smtp_user, settings.smtp_password)
+            serveur.send_message(msg)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+    # TODO(dev): déporter l'envoi dans une tâche de fond (ne pas bloquer la requête).
 
 
 _EXPEDITEURS = {"whatsapp": _envoyer_whatsapp, "email": _envoyer_email}
@@ -83,7 +115,10 @@ def notifier_anomalie(db: Session, *, type_: str, severite: str, description: st
     """Déclenche une alerte pour une anomalie grave (severite haute/critique)."""
     if severite not in SEVERITES_ALERTE:
         return []
-    sujet = f"[{severite.upper()}] Anomalie : {type_}"
-    message = description or f"Anomalie {type_} détectée."
-    return notifier(db, sujet, message, severite=severite, site_id=site_id,
+    # type_/severite peuvent être des Enum (str) : on prend leur valeur lisible.
+    type_txt = getattr(type_, "value", type_)
+    sev_txt = getattr(severite, "value", severite)
+    sujet = f"[{sev_txt.upper()}] Anomalie : {type_txt}"
+    message = description or f"Anomalie {type_txt} détectée."
+    return notifier(db, sujet, message, severite=sev_txt, site_id=site_id,
                     ref_type="anomalie", ref_id=anomalie_id, commit=commit)

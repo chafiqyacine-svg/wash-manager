@@ -61,6 +61,31 @@ def test_ecart_caisse_declenche_alerte(client, db, ref):
     assert len(alertes) == 1 and "Écart" in alertes[0].sujet
 
 
+def test_canal_configure_marque_envoye(db, ref, monkeypatch):
+    """Quand un canal est configuré et l'envoi réussit, statut = envoye."""
+    import app.services.notifications as N
+    monkeypatch.setattr(N, "_canaux_configures", lambda: ["email"])
+    monkeypatch.setattr(N, "_destinataires", lambda canal: ["boss@station.ma"])
+    monkeypatch.setitem(N._EXPEDITEURS, "email", lambda d, s, m: True)
+    (entree,) = N.notifier(db, "Sujet", "Message")
+    assert entree.statut == "envoye"
+    assert entree.canal == "email" and entree.destinataire == "boss@station.ma"
+
+
+def test_canal_configure_echec_marque_echec(db, ref, monkeypatch):
+    import app.services.notifications as N
+    monkeypatch.setattr(N, "_canaux_configures", lambda: ["whatsapp"])
+    monkeypatch.setattr(N, "_destinataires", lambda canal: ["+2126..."])
+    monkeypatch.setitem(N._EXPEDITEURS, "whatsapp", lambda d, s, m: False)
+    (entree,) = N.notifier(db, "S", "M")
+    assert entree.statut == "echec"
+
+
+def test_email_non_configure_renvoie_false():
+    from app.services.notifications import _envoyer_email
+    assert _envoyer_email("x@y", "s", "m") is False   # settings.smtp_host vide en test
+
+
 def test_endpoints_historique_test_et_permission(client, db, ref):
     # test d'envoi (admin) -> crée une entrée
     r = client.post("/api/v1/notifications/test")

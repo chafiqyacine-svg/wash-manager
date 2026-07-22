@@ -17,6 +17,7 @@ from app.api.routes import (
     dashboard,
     employes,
     events,
+    export,
     forfaits,
     horaires,
     live,
@@ -90,6 +91,7 @@ app.include_router(parametres.router, prefix=API_PREFIX)
 app.include_router(anomalies.router, prefix=API_PREFIX)
 app.include_router(audit.router, prefix=API_PREFIX)
 app.include_router(rapports.router, prefix=API_PREFIX)
+app.include_router(export.router, prefix=API_PREFIX)
 app.include_router(live.router, prefix=API_PREFIX)
 
 # Stockage médias servi en statique (selfies de pointage, captures…).

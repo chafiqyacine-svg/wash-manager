@@ -135,4 +135,16 @@ export default {
   "alr.statut.envoye": "مُرسَل",
   "alr.statut.simule": "محاكاة",
   "alr.statut.echec": "فشل",
+
+  // Export comptable
+  "nav.export": "التصدير المحاسبي",
+  "exp.title": "التصدير المحاسبي",
+  "exp.subtitle": "حمّل المداخيل والإغلاقات بصيغة CSV (Excel) لفترة محددة.",
+  "exp.from": "من",
+  "exp.to": "إلى",
+  "exp.download": "تحميل CSV",
+  "exp.recettes": "المداخيل (التذاكر)",
+  "exp.recettes_desc": "سطر لكل تذكرة: التاريخ، الباقة، السعر، الوسيلة، اللوحة.",
+  "exp.clotures": "إغلاقات الصندوق",
+  "exp.clotures_desc": "تقارير Z: المجموع، الرصيد، المبلغ المعدود والفارق لكل يوم.",
 };

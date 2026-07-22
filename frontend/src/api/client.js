@@ -131,6 +131,25 @@ export const api = {
   notifications: () => request("/notifications"),
   notificationsCanaux: () => request("/notifications/canaux"),
   testerNotification: () => request("/notifications/test", { method: "POST" }),
+  // Export comptable CSV (téléchargement authentifié)
+  async exporterCsv(type, { debut, fin, siteId } = {}) {
+    const qs = new URLSearchParams();
+    if (debut) qs.set("debut", debut);
+    if (fin) qs.set("fin", fin);
+    if (siteId) qs.set("site_id", siteId);
+    const headers = {};
+    const tk = getToken();
+    if (tk) headers["Authorization"] = `Bearer ${tk}`;
+    const res = await fetch(`${BASE}/export/${type}.csv?${qs}`, { headers });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${type}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),

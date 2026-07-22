@@ -11,6 +11,7 @@ import Cloture from "./pages/Cloture.jsx";
 import Config from "./pages/Config.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Employees from "./pages/Employees.jsx";
+import Export from "./pages/Export.jsx";
 import History from "./pages/History.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import LiveView from "./pages/LiveView.jsx";
@@ -65,6 +66,7 @@ export default function App() {
                 <Route path="/audit" element={<Audit />} />
                 <Route path="/objectifs" element={<Objectifs />} />
                 <Route path="/alertes" element={<Alertes />} />
+                <Route path="/export" element={<Export />} />
                 <Route path="/bays" element={<Bays />} />
                 <Route path="/queue" element={<Queue />} />
                 <Route path="/payments" element={<Payments />} />

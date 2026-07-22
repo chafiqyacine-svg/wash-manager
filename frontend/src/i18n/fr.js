@@ -136,4 +136,16 @@ export default {
   "alr.statut.envoye": "Envoyée",
   "alr.statut.simule": "Simulée",
   "alr.statut.echec": "Échec",
+
+  // Export comptable
+  "nav.export": "Export comptable",
+  "exp.title": "Export comptable",
+  "exp.subtitle": "Téléchargez les recettes et clôtures en CSV (Excel) sur une période.",
+  "exp.from": "Du",
+  "exp.to": "Au",
+  "exp.download": "Télécharger CSV",
+  "exp.recettes": "Recettes (tickets)",
+  "exp.recettes_desc": "Un ticket encaissé par ligne : date, forfait, prix, mode, plaque.",
+  "exp.clotures": "Clôtures de caisse",
+  "exp.clotures_desc": "Rapports Z : total, fond, montant compté et écart par jour.",
 };

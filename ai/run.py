@@ -26,6 +26,17 @@ def charger_config(path: str) -> dict:
         return yaml.safe_load(f)
 
 
+def injecter_palette(cameras: list[dict], palette: list[str]) -> None:
+    """Renseigne `palette_gilets` des caméras zone qui n'en figent pas une.
+
+    Une palette figée en config a priorité (override) ; sinon on utilise celle
+    chargée depuis le backend. Modifie `cameras` en place.
+    """
+    for cam in cameras:
+        if cam.get("detecter_gilet") and not cam.get("palette_gilets"):
+            cam["palette_gilets"] = list(palette)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Pipeline IA lavage auto (edge)")
     parser.add_argument("--config", default="config.yaml")
@@ -36,6 +47,12 @@ def main() -> None:
     # Client backend
     api_key = os.getenv(cfg["backend"].get("api_key_env", "AI_INGEST_API_KEY"), "")
     client = EventClient(cfg["backend"]["events_url"], api_key)
+
+    # Palette de gilets : chargée dynamiquement depuis le backend (source de
+    # vérité = employés enregistrés), sauf si la caméra en fige une en config.
+    palette_backend = client.charger_palette_gilets()
+    injecter_palette(cfg["cameras"], palette_backend)
+    print(f"Palette gilets chargée depuis le backend : {len(palette_backend)} couleur(s).")
 
     # Modèles partagés (TODO(dev): .load() réel — nécessite les poids)
     detector = Detector(cfg["models"]["vehicule_detector"])

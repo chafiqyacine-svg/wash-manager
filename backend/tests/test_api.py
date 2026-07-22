@@ -36,6 +36,24 @@ def test_creation_ticket(client, ref):
     assert r.json()["statut"] == "ouvert"
 
 
+def test_palette_gilets_pour_edge(client, db, ref):
+    """Le pipeline edge récupère les couleurs de gilet via la clé d'ingestion."""
+    from app.models import Employe
+    db.add_all([
+        Employe(nom="A", site_id=ref["site1"].id, couleur_gilet="#E11D48"),
+        Employe(nom="B", site_id=ref["site1"].id, couleur_gilet="#2563EB"),
+        Employe(nom="C", site_id=ref["site1"].id, couleur_gilet=None),        # ignoré
+        Employe(nom="D", site_id=ref["site1"].id, couleur_gilet="#059669", actif=False),  # ignoré
+    ])
+    db.commit()
+    # Sans clé d'ingestion -> refusé.
+    assert client.get("/api/v1/events/palette-gilets").status_code == 401
+    # Avec la clé d'ingestion (edge).
+    r = client.get("/api/v1/events/palette-gilets", headers={"X-AI-Key": "test-key"})
+    assert r.status_code == 200
+    assert sorted(r.json()["couleurs"]) == ["#2563EB", "#E11D48"]
+
+
 def test_users_reserve_admin(client, db, ref):
     # crée un manager, se connecte en manager -> /users interdit (403)
     db.add(Utilisateur(email="mgr@test", nom="M", hashed_password=hash_password("pw"),

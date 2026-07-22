@@ -59,3 +59,19 @@ class EventClient:
             # TODO(dev): file de retry locale (SQLite/queue) en cas de coupure réseau
             #   pour ne perdre aucun événement.
             return False
+
+    def charger_palette_gilets(self, site_id: int | None = None) -> list[str]:
+        """Récupère les couleurs de gilet enregistrées auprès du backend.
+
+        Appelé au démarrage pour garder l'edge synchronisé avec les employés
+        (au lieu d'une palette figée en config). Renvoie [] en cas d'échec :
+        l'identification par gilet est alors simplement désactivée.
+        """
+        url = self.events_url.rstrip("/") + "/palette-gilets"
+        params = {"site_id": site_id} if site_id else None
+        try:
+            resp = self._client.get(url, headers={"X-AI-Key": self.api_key}, params=params)
+            resp.raise_for_status()
+            return list(resp.json().get("couleurs", []))
+        except httpx.HTTPError:
+            return []

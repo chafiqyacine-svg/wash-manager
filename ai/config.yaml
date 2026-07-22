@@ -30,9 +30,10 @@ cameras:
     # Identification du laveur par gilet : détecte la personne au poste et
     # émet sa couleur de gilet (rapprochée de l'employé côté backend).
     detecter_gilet: true
-    # Couleurs enregistrées des gilets (doivent matcher Employe.couleur_gilet).
-    # TODO(dev): charger dynamiquement depuis GET /api/v1/employes au démarrage.
-    palette_gilets: ["#E11D48", "#2563EB", "#059669"]
+    # palette_gilets est chargée automatiquement au démarrage depuis le backend
+    # (GET /api/v1/events/palette-gilets, source de vérité = employés).
+    # Décommenter pour la figer et ignorer le backend :
+    # palette_gilets: ["#E11D48", "#2563EB", "#059669"]
 
   - id: "cam_aspiration"
     role: "zone"

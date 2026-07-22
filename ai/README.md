@@ -42,6 +42,24 @@ anomalies) : celle-ci vit dans le backend.
 | `config.yaml`           | Caméras, zones (coordonnées), forfaits, seuils.            |
 | `run.py`                | Lanceur : `python run.py --config config.yaml`.            |
 
+## Topologie caméras & corrélation des véhicules
+
+Le tracker attribue des `track_id` **locaux et par caméra** (1, 2, 3…). Pour
+éviter que deux caméras réutilisent le même id sur des véhicules différents, le
+pipeline **préfixe la clé de suivi par la caméra** (`camera_id:track_id`) avant
+émission ; c'est cette clé que le backend corrèle.
+
+Deux montages :
+
+| Montage | Rôle caméra | Corrélation | Statut |
+|---------|-------------|-------------|--------|
+| **Une caméra par baie** (recommandé v1) | `bay` (entrée+zones+sortie) | `track_id` stable sur tout le parcours | ✅ fonctionne sans ré-ID |
+| Une caméra par stage | `entree` / `zone` / `sortie` | nécessite une ré-identification inter-caméras | ⚠️ TODO(dev) |
+
+Le rôle `bay` traite, sur **une seule** caméra plongeante, la ligne d'entrée, les
+polygones de zones (B/C/D) et la ligne de sortie. Dupliquer la caméra par baie :
+les clés ne peuvent pas entrer en collision. Voir `config.yaml`.
+
 ## Points à finir (`TODO(dev)`)
 
 - Charger les poids YOLO réels (`ai/models/`) et le modèle LPR marocain.

@@ -1,5 +1,7 @@
 """Tests de la file locale durable (outbox) et de l'envoi durable/ordonné."""
-from pipeline.events import Event, EventClient, EventType
+import threading
+
+from pipeline.events import Event, EventClient, EventType, FlushPeriodique
 from pipeline.outbox import Outbox
 
 
@@ -83,3 +85,33 @@ def test_sans_outbox_comportement_direct():
     client = _client(reseau, outbox=None)
     assert client.send(Event(EventType.ENTREE, "v1")) is True
     assert len(reseau.recus) == 1
+
+
+# ─── Flush périodique (thread de fond) ───────────────────────────────────────
+def test_tick_flush_draine_l_outbox():
+    ob = Outbox(":memory:")
+    ob.ajouter({"type": "entree", "track_id": "v1"})
+    client = _client(_Reseau(up=True), ob)
+    assert client._tick_flush() == 1
+    assert ob.taille() == 0
+
+
+def test_flush_periodique_vide_en_tache_de_fond():
+    ob = Outbox(":memory:")
+    reseau = _Reseau(up=False)
+    client = _client(reseau, ob)
+    client.send(Event(EventType.ENTREE, "v1"))   # réseau coupé -> persistée
+    assert ob.taille() == 1
+
+    vide = threading.Event()
+    reseau.up = True                             # réseau rétabli
+    service = FlushPeriodique(client, intervalle=0.01)
+    # Enveloppe flush pour signaler dès que la file est vidée.
+    _flush = client.flush
+    client.flush = lambda: (n := _flush(), vide.set() if ob.taille() == 0 else None)[0]
+    service.demarrer()
+    try:
+        assert vide.wait(timeout=2)              # vidée par le thread
+        assert ob.taille() == 0
+    finally:
+        service.arreter()

@@ -15,7 +15,7 @@ import os
 import yaml
 
 from pipeline.detector import Detector
-from pipeline.events import EventClient
+from pipeline.events import EventClient, FlushPeriodique
 from pipeline.lpr import LecteurPlaque
 from pipeline.orchestrator import CameraWorker
 from pipeline.outbox import Outbox
@@ -50,6 +50,9 @@ def main() -> None:
     api_key = os.getenv(cfg["backend"].get("api_key_env", "AI_INGEST_API_KEY"), "")
     outbox = Outbox(cfg["backend"].get("outbox_path", "outbox.db"))
     client = EventClient(cfg["backend"]["events_url"], api_key, outbox=outbox)
+    # Vide l'outbox en tâche de fond (reprise après coupure réseau prolongée).
+    flush = FlushPeriodique(client, cfg["backend"].get("flush_intervalle_s", 5.0))
+    flush.demarrer()  # TODO(dev): flush.arreter() à l'arrêt propre (SIGINT).
 
     # Palette de gilets : chargée dynamiquement depuis le backend (source de
     # vérité = employés enregistrés), sauf si la caméra en fige une en config.

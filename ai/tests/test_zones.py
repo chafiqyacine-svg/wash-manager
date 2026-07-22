@@ -22,3 +22,17 @@ def test_zone_enter_exit():
     assert zone.maj(t, (5, 5)) == "enter"
     assert zone.maj(t, (6, 6)) is None      # reste dedans
     assert zone.maj(t, (50, 50)) == "exit"
+
+
+def test_ligne_borne_la_memoire():
+    ligne = DetecteurLigne((0, 100), (200, 100), max_tracks=10)
+    for i in range(1000):
+        ligne.a_franchi(f"v{i}", (100, 50))
+    assert len(ligne._dernier_cote) <= 10
+
+
+def test_zone_borne_la_memoire():
+    zone = DetecteurZone([(0, 0), (10, 0), (10, 10), (0, 10)], max_tracks=10)
+    for i in range(1000):
+        zone.maj(f"v{i}", (5, 5))
+    assert len(zone._present) <= 10

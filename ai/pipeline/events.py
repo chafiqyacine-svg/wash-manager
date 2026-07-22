@@ -5,6 +5,7 @@ DOIT rester synchronisé avec `backend/app/schemas/event.py`.
 from __future__ import annotations
 
 import os
+import threading
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -102,6 +103,13 @@ class EventClient:
                 break  # réseau toujours indisponible : on réessaiera plus tard
         return envoyes
 
+    def _tick_flush(self) -> int:
+        """Une passe de flush (extraite pour être testable sans thread)."""
+        try:
+            return self.flush()
+        except Exception:  # noqa: BLE001 — un flush ne doit jamais tuer le thread
+            return 0
+
     def charger_palette_gilets(self, site_id: int | None = None) -> list[str]:
         """Récupère les couleurs de gilet enregistrées auprès du backend.
 
@@ -117,3 +125,32 @@ class EventClient:
             return list(resp.json().get("couleurs", []))
         except httpx.HTTPError:
             return []
+
+
+class FlushPeriodique:
+    """Vide périodiquement l'outbox d'un EventClient en tâche de fond.
+
+    Nécessaire pour reprendre l'envoi après une coupure réseau prolongée, même
+    si aucun nouvel événement n'arrive (l'outbox n'est sinon vidée qu'au
+    prochain `send`). Thread daemon ; `arreter()` pour un arrêt propre.
+    """
+
+    def __init__(self, client: EventClient, intervalle: float = 5.0) -> None:
+        self.client = client
+        self.intervalle = intervalle
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def demarrer(self) -> None:
+        self._thread = threading.Thread(target=self._boucle, daemon=True)
+        self._thread.start()
+
+    def _boucle(self) -> None:
+        # wait() renvoie True si arrêt demandé, False au timeout (→ on flush).
+        while not self._stop.wait(self.intervalle):
+            self.client._tick_flush()
+
+    def arreter(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2)

@@ -6,6 +6,7 @@ backend:
   events_url: "http://backend:8000/api/v1/events"
   api_key_env: "AI_INGEST_API_KEY"   # la clé est lue depuis l'environnement
   outbox_path: "outbox.db"           # file locale durable (aucun événement perdu)
+  flush_intervalle_s: 5.0            # période de vidage de l'outbox en tâche de fond
 
 models:
   vehicule_detector: "ai/models/yolo_vehicules.pt"   # TODO(dev): fournir les poids
@@ -16,39 +17,48 @@ tracking:
   type: "bytetrack"   # bytetrack | deepsort
   max_age: 30
 
-# Une entrée par caméra. `role` détermine ce que le pipeline y cherche.
+# TOPOLOGIE. Le tracker numérote les véhicules LOCALEMENT et par caméra ; le
+# backend corrèle les événements d'un véhicule par sa clé de suivi (préfixée par
+# la caméra). Deux montages sont possibles :
+#
+#   • RECOMMANDÉ (v1) — une caméra plongeante PAR BAIE (role: "bay") couvrant
+#     entrée + zones + sortie. Le track_id reste stable sur tout le parcours ;
+#     aucune ré-identification n'est nécessaire. Voir cam_baie1 ci-dessous.
+#
+#   • AVANCÉ — une caméra par STAGE (entree / zone / sortie, plus bas, en
+#     commentaire). Corréler un véhicule d'une caméra à l'autre exige une
+#     ré-identification inter-caméras (TODO(dev), non fournie).
 cameras:
-  - id: "cam_entree"
-    role: "entree"          # ligne d'entrée (A) + LPR
+  - id: "cam_baie1"
+    role: "bay"             # une baie complète : entrée + zones + sortie
     source: "rtsp://user:pass@192.168.1.10:554/stream1"  # TODO(dev)
-    ligne_entree: [[100, 400], [900, 400]]   # [x1,y1],[x2,y2] — TODO(dev): calibrer
-
-  - id: "cam_lavage"
-    role: "zone"
-    zone_code: "B"          # lavage extérieur
-    source: "rtsp://user:pass@192.168.1.11:554/stream1"
-    polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]  # TODO(dev): calibrer
-    # Identification du laveur par gilet : détecte la personne au poste et
-    # émet sa couleur de gilet (rapprochée de l'employé côté backend).
+    ligne_entree: [[100, 200], [900, 200]]   # [x1,y1],[x2,y2] — TODO(dev): calibrer
+    ligne_sortie: [[100, 800], [900, 800]]
+    zones:                                   # TODO(dev): calibrer chaque polygone
+      - { zone_code: "B", polygone: [[100, 200], [900, 200], [900, 450], [100, 450]] }
+      - { zone_code: "C", polygone: [[100, 450], [900, 450], [900, 650], [100, 650]] }
+      - { zone_code: "D", polygone: [[100, 650], [900, 650], [900, 800], [100, 800]] }
+    # Identification du laveur par gilet (couleur rapprochée de l'employé).
     detecter_gilet: true
     # palette_gilets est chargée automatiquement au démarrage depuis le backend
     # (GET /api/v1/events/palette-gilets, source de vérité = employés).
     # Décommenter pour la figer et ignorer le backend :
     # palette_gilets: ["#E11D48", "#2563EB", "#059669"]
 
-  - id: "cam_aspiration"
-    role: "zone"
-    zone_code: "C"          # aspiration
-    source: "rtsp://user:pass@192.168.1.12:554/stream1"
-    polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]
+  # Dupliquer le bloc ci-dessus par baie (cam_baie2, cam_baie3…), une source par
+  # caméra. Les track_id ne peuvent pas entrer en collision (préfixe caméra).
 
-  - id: "cam_polish"
-    role: "zone"
-    zone_code: "D"          # polish / cire
-    source: "rtsp://user:pass@192.168.1.13:554/stream1"
-    polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]
-
-  - id: "cam_sortie"
-    role: "sortie"          # ligne de sortie (E)
-    source: "rtsp://user:pass@192.168.1.14:554/stream1"
-    ligne_sortie: [[100, 400], [900, 400]]
+  # ── Alternative « une caméra par stage » (nécessite ré-ID inter-caméras) ────
+  # - id: "cam_entree"
+  #   role: "entree"
+  #   source: "rtsp://…"
+  #   ligne_entree: [[100, 400], [900, 400]]
+  # - id: "cam_lavage"
+  #   role: "zone"
+  #   zone_code: "B"
+  #   source: "rtsp://…"
+  #   polygone: [[50, 50], [900, 50], [900, 700], [50, 700]]
+  # - id: "cam_sortie"
+  #   role: "sortie"
+  #   source: "rtsp://…"
+  #   ligne_sortie: [[100, 400], [900, 400]]

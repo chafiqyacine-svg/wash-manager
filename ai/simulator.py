@@ -66,6 +66,15 @@ class BackendSession:
         resp.raise_for_status()
         return resp.json()
 
+    def couleurs_gilets(self) -> list[str]:
+        """Couleurs de gilet des employés (pour simuler l'identification)."""
+        resp = self._client.get(
+            f"{self.api_base}/api/v1/employes",
+            headers={"Authorization": f"Bearer {self._token}"},
+        )
+        resp.raise_for_status()
+        return [e["couleur_gilet"] for e in resp.json() if e.get("couleur_gilet")]
+
     def creer_ticket(self, forfait_id: int, plaque: str | None,
                      mode_paiement: str = "espece") -> None:
         self._client.post(
@@ -82,6 +91,7 @@ def simuler_vehicule(
     forfaits_par_nom: dict[str, dict],
     t0: datetime,
     anomaly_rate: float,
+    gilets: list[str] | None = None,
 ) -> None:
     """Simule un passage complet : ticket (parfois) + parcours + événements."""
     track_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
@@ -118,6 +128,10 @@ def simuler_vehicule(
     events.send(Event(EventType.ENTREE, track_id, timestamp=t.isoformat(), camera_id="cam_entree"))
     events.send(Event(EventType.PLAQUE, track_id, timestamp=t.isoformat(),
                       camera_id="cam_entree", plaque=plaque, plaque_confiance=0.95))
+    # Identification du laveur par gilet (si des employés ont une couleur).
+    if gilets:
+        events.send(Event(EventType.BADGE, track_id, timestamp=t.isoformat(),
+                          couleur_gilet=random.choice(gilets)))
 
     for zone in FORFAIT_ZONES[forfait_effectue]:
         t += timedelta(seconds=random.randint(20, 60))
@@ -149,12 +163,13 @@ def main() -> None:
     forfaits_par_nom = {f["nom"]: f for f in session.forfaits()}
     if not forfaits_par_nom:
         raise SystemExit("Aucun forfait en base — lancez d'abord `python -m app.db.seed`.")
+    gilets = session.couleurs_gilets()  # pour simuler l'identification employé
 
     # Étale les arrivées sur la journée écoulée.
     debut = datetime.now(timezone.utc).replace(hour=8, minute=0, second=0, microsecond=0)
     for i in range(args.count):
         t0 = debut + timedelta(minutes=i * random.randint(8, 20))
-        simuler_vehicule(events, session, forfaits_par_nom, t0, args.anomaly_rate)
+        simuler_vehicule(events, session, forfaits_par_nom, t0, args.anomaly_rate, gilets)
 
     print(f"{args.count} véhicule(s) simulé(s) vers {args.backend}. "
           f"Consultez le dashboard / les rapports.")

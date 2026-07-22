@@ -38,19 +38,29 @@ class CameraWorker:
         self.role = cam_config["role"]
         self.camera_id = cam_config["id"]
 
-        # Détecteurs géométriques selon le rôle
+        # Détecteurs géométriques selon le rôle. Le rôle "bay" (une caméra par
+        # baie, topologie v1 recommandée) cumule entrée + zones + sortie : le
+        # track_id reste stable sur tout le parcours du véhicule.
         self.ligne_entree = (
             DetecteurLigne(*map(tuple, cam_config["ligne_entree"]))
-            if self.role == "entree" else None
+            if cam_config.get("ligne_entree") and self.role in ("entree", "bay") else None
         )
         self.ligne_sortie = (
             DetecteurLigne(*map(tuple, cam_config["ligne_sortie"]))
-            if self.role == "sortie" else None
+            if cam_config.get("ligne_sortie") and self.role in ("sortie", "bay") else None
         )
-        self.zone = (
-            DetecteurZone([tuple(p) for p in cam_config["polygone"]])
-            if self.role == "zone" else None
-        )
+        # Zones surveillées : une seule (rôle "zone") ou plusieurs (rôle "bay").
+        self.zones: list[tuple[str, DetecteurZone]] = []
+        if self.role == "zone" and cam_config.get("polygone"):
+            self.zones.append(
+                (cam_config.get("zone_code"),
+                 DetecteurZone([tuple(p) for p in cam_config["polygone"]]))
+            )
+        elif self.role == "bay":
+            for z in cam_config.get("zones", []):
+                self.zones.append(
+                    (z["zone_code"], DetecteurZone([tuple(p) for p in z["polygone"]]))
+                )
         self.zone_code = cam_config.get("zone_code")
 
         # Identification du laveur par gilet (caméras de zone uniquement).
@@ -60,26 +70,31 @@ class CameraWorker:
         self.palette_gilets = cam_config.get("palette_gilets", [])
 
     def traiter_frame(self, image) -> None:
-        """Traite une frame : détecte+suit, évalue zones/lignes, émet events."""
+        """Traite une frame : détecte+suit, évalue lignes/zones, émet les events.
+
+        Uniforme pour tous les rôles : seuls les détecteurs présents s'activent
+        (entrée seule, sortie seule, zone(s), ou tout à la fois pour "bay").
+        """
         tracks = self.tracker.update(image)  # détection + suivi (ByteTrack)
 
         for track in tracks:
             point = _point_reference(track.bbox)
+            tid = track.track_id
 
-            if self.role == "entree" and self.ligne_entree.a_franchi(track.track_id, point):
-                self._emit(EventType.ENTREE, track.track_id)
-                self._lire_et_emettre_plaque(track.track_id, image)
+            if self.ligne_entree and self.ligne_entree.a_franchi(tid, point):
+                self._emit(EventType.ENTREE, tid)
+                self._lire_et_emettre_plaque(tid, image)
 
-            elif self.role == "sortie" and self.ligne_sortie.a_franchi(track.track_id, point):
-                self._emit(EventType.SORTIE, track.track_id)
-
-            elif self.role == "zone":
-                transition = self.zone.maj(track.track_id, point)
+            for code, zone in self.zones:
+                transition = zone.maj(tid, point)
                 if transition == "enter":
-                    self._emit(EventType.ZONE_ENTER, track.track_id, zone=self.zone_code)
-                    self._identifier_laveur(track.track_id, point, image)
+                    self._emit(EventType.ZONE_ENTER, tid, zone=code)
+                    self._identifier_laveur(tid, point, image)
                 elif transition == "exit":
-                    self._emit(EventType.ZONE_EXIT, track.track_id, zone=self.zone_code)
+                    self._emit(EventType.ZONE_EXIT, tid, zone=code)
+
+            if self.ligne_sortie and self.ligne_sortie.a_franchi(tid, point):
+                self._emit(EventType.SORTIE, tid)
 
     def _identifier_laveur(self, track_id: str, vehicule_point, image) -> None:
         """À l'entrée d'un véhicule en zone, identifie le laveur par la couleur
@@ -122,10 +137,20 @@ class CameraWorker:
             plaque_confiance=resultat.confiance,
         )
 
+    def _cle_suivi(self, track_id: str) -> str:
+        """Clé de suivi GLOBALE = caméra + id local du tracker.
+
+        Les trackers numérotent les véhicules localement (1, 2, 3…) et par
+        caméra : deux caméras réutilisent les mêmes id pour des véhicules
+        différents. On préfixe donc par la caméra pour éviter toute collision
+        côté backend (qui corrèle les événements par cette clé).
+        """
+        return f"{self.camera_id}:{track_id}"
+
     def _emit(self, type_: EventType, track_id: str, **kwargs) -> None:
         event = Event(
             type=type_,
-            track_id=track_id,
+            track_id=self._cle_suivi(track_id),
             camera_id=self.camera_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
             **kwargs,

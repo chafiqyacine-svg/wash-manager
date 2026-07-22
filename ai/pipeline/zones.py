@@ -9,6 +9,17 @@ from __future__ import annotations
 
 Point = tuple[float, float]
 
+# Nombre max de track_id mémorisés par détecteur : borne la mémoire sur les
+# longues sessions (le tracker crée sans cesse de nouveaux id).
+MAX_TRACKS = 4096
+
+
+def _borner(etat: dict, maximum: int = MAX_TRACKS) -> None:
+    """Évince les plus anciens track_id tant que `etat` dépasse `maximum`.
+    (Les dicts Python conservent l'ordre d'insertion → le 1er est le plus vieux.)"""
+    while len(etat) > maximum:
+        etat.pop(next(iter(etat)))
+
 
 def _cote_ligne(p: Point, a: Point, b: Point) -> float:
     """Signe indiquant de quel côté de la ligne (a→b) se trouve p."""
@@ -22,15 +33,17 @@ class DetecteurLigne:
     franchissement.
     """
 
-    def __init__(self, a: Point, b: Point) -> None:
+    def __init__(self, a: Point, b: Point, max_tracks: int = MAX_TRACKS) -> None:
         self.a = a
         self.b = b
+        self.max_tracks = max_tracks
         self._dernier_cote: dict[str, float] = {}
 
     def a_franchi(self, track_id: str, point: Point) -> bool:
         cote = _cote_ligne(point, self.a, self.b)
         precedent = self._dernier_cote.get(track_id)
         self._dernier_cote[track_id] = cote
+        _borner(self._dernier_cote, self.max_tracks)
         if precedent is None:
             return False
         # TODO(dev): imposer un seuil sur |cote| pour éviter le bruit près de la ligne.
@@ -58,14 +71,16 @@ class DetecteurZone:
     Retourne un événement "enter" ou "exit" au changement d'état, sinon None.
     """
 
-    def __init__(self, polygone: list[Point]) -> None:
+    def __init__(self, polygone: list[Point], max_tracks: int = MAX_TRACKS) -> None:
         self.polygone = polygone
+        self.max_tracks = max_tracks
         self._present: dict[str, bool] = {}
 
     def maj(self, track_id: str, point: Point) -> str | None:
         dedans = point_dans_polygone(point, self.polygone)
         avant = self._present.get(track_id, False)
         self._present[track_id] = dedans
+        _borner(self._present, self.max_tracks)
         if dedans and not avant:
             return "enter"
         if not dedans and avant:

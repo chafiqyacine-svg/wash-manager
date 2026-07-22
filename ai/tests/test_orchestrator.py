@@ -61,7 +61,8 @@ def test_zone_emet_zone_enter_puis_badge_gilet(monkeypatch):
     assert EventType.BADGE in types
     badge = next(e for e in client.events if e.type == EventType.BADGE)
     assert badge.couleur_gilet == "#E11D48"
-    assert badge.track_id == "v1"
+    # track_id préfixé par la caméra (clé globale anti-collision).
+    assert badge.track_id == "cam_zone_b:v1"
 
 
 def test_pas_de_badge_sans_personne(monkeypatch):
@@ -86,6 +87,41 @@ def test_pas_de_badge_si_couleur_inconnue(monkeypatch):
     )
     worker.traiter_frame(image=object())
     assert all(e.type != EventType.BADGE for e in client.events)
+
+
+def test_role_bay_parcours_complet_track_id_stable():
+    """Une caméra 'bay' couvre entrée + zone + sortie : le track_id (préfixé
+    caméra) reste stable sur tout le parcours → corrélation backend correcte."""
+    cfg = {
+        "id": "cam_bay1", "role": "bay",
+        "ligne_entree": [[0, 100], [300, 100]],
+        "ligne_sortie": [[0, 300], [300, 300]],
+        "zones": [{"zone_code": "B", "polygone": [[0, 100], [300, 100], [300, 300], [0, 300]]}],
+    }
+    client = FakeClient()
+    worker = CameraWorker(cfg, detector=FakeDetector([]), tracker=FakeTracker([]), client=client)
+
+    # Le véhicule descend : au-dessus de l'entrée → dans la zone → sous la sortie.
+    for y in (50, 200, 350):
+        v = SimpleNamespace(track_id="3", bbox=(100, y - 10, 140, y), classe="car")
+        worker.tracker = FakeTracker([v])
+        worker.traiter_frame(object())
+
+    types = [e.type for e in client.events]
+    assert types == [EventType.ENTREE, EventType.ZONE_ENTER,
+                     EventType.ZONE_EXIT, EventType.SORTIE]
+    # Tous les événements partagent la MÊME clé globale.
+    assert {e.track_id for e in client.events} == {"cam_bay1:3"}
+
+
+def test_track_id_prefixe_par_camera():
+    cfg = {"id": "camX", "role": "zone", "zone_code": "B",
+           "polygone": [[0, 0], [500, 0], [500, 500], [0, 500]]}
+    client = FakeClient()
+    v = SimpleNamespace(track_id="7", bbox=(100, 100, 200, 200), classe="car")
+    worker = CameraWorker(cfg, detector=FakeDetector([]), tracker=FakeTracker([v]), client=client)
+    worker.traiter_frame(object())
+    assert client.events[0].track_id == "camX:7"
 
 
 class _LPRQuiCasse:

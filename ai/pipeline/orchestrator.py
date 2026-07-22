@@ -109,7 +109,13 @@ class CameraWorker:
         if self.lpr is None:
             return
         # TODO(dev): découper la région du véhicule avant LPR pour plus de précision.
-        resultat = self.lpr.lire(image)
+        try:
+            resultat = self.lpr.lire(image)
+        except Exception:  # noqa: BLE001 — OCR indisponible/en erreur : ne pas tuer la boucle
+            # On émet quand même une PLAQUE sans valeur : le backend enregistre
+            # l'entrée et pourra lever PLAQUE_NON_LUE / demander une saisie manuelle.
+            self._emit(EventType.PLAQUE, track_id, plaque=None, plaque_confiance=0.0)
+            return
         self._emit(
             EventType.PLAQUE, track_id,
             plaque=resultat.plaque if resultat.valide else None,

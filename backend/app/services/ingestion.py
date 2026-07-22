@@ -67,11 +67,17 @@ def traiter_evenement(db: Session, event: EventIn) -> Transaction | None:
 
 
 def _get_transaction_active(db: Session, track_id: str) -> Transaction | None:
+    # Le tracker réattribue les track_id après le départ d'un véhicule ; si une
+    # SORTIE a été manquée, une ancienne transaction peut rester "en_cours" avec
+    # le même track_id. On retient donc TOUJOURS la plus récente (le véhicule
+    # courant), pas une correspondance arbitraire.
     return db.scalar(
-        select(Transaction).where(
+        select(Transaction)
+        .where(
             Transaction.track_id == track_id,
             Transaction.statut == "en_cours",
         )
+        .order_by(Transaction.id.desc())
     )
 
 

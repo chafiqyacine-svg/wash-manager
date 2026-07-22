@@ -79,6 +79,26 @@ def test_forfait_non_respecte(db, ref):
     assert txn.conforme is False
 
 
+def test_track_id_reutilise_cible_la_transaction_recente(db, ref):
+    """Deux 'en_cours' avec le même track_id (SORTIE manquée + réattribution) :
+    les événements suivants ciblent la transaction la PLUS RÉCENTE."""
+    traiter_evenement(db, _ev(EventType.ENTREE, "7"))       # 1er véhicule (SORTIE ratée)
+    ancienne = _active(db, "7")
+    traiter_evenement(db, _ev(EventType.ENTREE, "7"))       # 2e véhicule, id réattribué
+    recente = db.scalars(select(Transaction).where(Transaction.track_id == "7")
+                         .order_by(Transaction.id.desc())).first()
+    assert recente.id != ancienne.id
+
+    # Une zone puis la sortie doivent s'appliquer à la transaction récente.
+    traiter_evenement(db, _ev(EventType.ZONE_ENTER, "7", zone="B"))
+    traiter_evenement(db, _ev(EventType.SORTIE, "7"))
+    db.refresh(ancienne); db.refresh(recente)
+    assert recente.statut == "cloturee"
+    assert recente.zone_b_debut is not None
+    assert ancienne.statut == "en_cours"      # l'ancienne n'est pas touchée
+    assert ancienne.zone_b_debut is None
+
+
 def test_identification_employe_par_gilet(db, ref):
     """Événement BADGE porteur de couleur_gilet → l'employé est rattaché à la txn.
 

@@ -88,6 +88,34 @@ def test_pas_de_badge_si_couleur_inconnue(monkeypatch):
     assert all(e.type != EventType.BADGE for e in client.events)
 
 
+class _LPRQuiCasse:
+    """LPR dont l'OCR n'est pas branché (lève, comme NotImplementedError)."""
+    def lire(self, image):
+        raise NotImplementedError("OCR non branché")
+
+
+def test_lpr_en_erreur_ne_tue_pas_la_boucle():
+    """Une caméra d'entrée avec un LPR non implémenté ne doit pas crasher :
+    on émet ENTREE + une PLAQUE vide plutôt que de propager l'exception."""
+    cfg = {"id": "cam_entree", "role": "entree",
+           "ligne_entree": [[0, 100], [200, 100]]}
+    vehicule_haut = SimpleNamespace(track_id="v1", bbox=(50, 0, 90, 40), classe="car")
+    vehicule_bas = SimpleNamespace(track_id="v1", bbox=(50, 150, 90, 190), classe="car")
+    client = FakeClient()
+    worker = CameraWorker(cfg, detector=FakeDetector([]),
+                          tracker=FakeTracker([vehicule_haut]), client=client,
+                          lpr=_LPRQuiCasse())
+    worker.traiter_frame(object())                 # 1er côté de la ligne
+    worker.tracker = FakeTracker([vehicule_bas])
+    worker.traiter_frame(object())                 # franchissement -> ENTREE + PLAQUE
+
+    types = [e.type for e in client.events]
+    assert EventType.ENTREE in types
+    assert EventType.PLAQUE in types               # émise malgré l'échec OCR
+    plaque = next(e for e in client.events if e.type == EventType.PLAQUE)
+    assert plaque.plaque is None                   # pas de valeur (saisie manuelle)
+
+
 def test_gilet_desactive_pas_de_detection(monkeypatch):
     monkeypatch.setattr(orch, "couleur_dominante", lambda img, bbox: (220, 35, 70))
     cfg = {**CONFIG_ZONE, "detecter_gilet": False}

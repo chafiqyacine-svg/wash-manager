@@ -30,11 +30,22 @@ class Settings(BaseSettings):
     whatsapp_api_url: str = ""
     whatsapp_api_token: str = ""
     whatsapp_manager_numbers: str = ""  # séparés par virgule
+    # Email (SMTP) — TODO(dev): renseigner pour activer le canal email
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "wash-manager@example.com"
+    alert_emails: str = ""              # destinataires email, séparés par virgule
     report_daily_hour: int = 21
 
     @property
     def manager_numbers(self) -> list[str]:
         return [n.strip() for n in self.whatsapp_manager_numbers.split(",") if n.strip()]
+
+    @property
+    def emails_alerte(self) -> list[str]:
+        return [e.strip() for e in self.alert_emails.split(",") if e.strip()]
 
 
 @lru_cache

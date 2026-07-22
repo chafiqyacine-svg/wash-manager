@@ -127,6 +127,10 @@ export const api = {
     request(`/objectifs/evaluation?${jour ? `jour=${jour}&` : ""}${siteId ? `site_id=${siteId}` : ""}`),
   creerObjectif: (payload) => request("/objectifs", { method: "POST", body: payload }),
   supprimerObjectif: (id) => request(`/objectifs/${id}`, { method: "DELETE" }),
+  // Alertes / notifications
+  notifications: () => request("/notifications"),
+  notificationsCanaux: () => request("/notifications/canaux"),
+  testerNotification: () => request("/notifications/test", { method: "POST" }),
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),

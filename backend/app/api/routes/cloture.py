@@ -14,6 +14,7 @@ from app.core.database import get_db
 from app.models import ClotureCaisse, Utilisateur
 from app.services.audit import journaliser
 from app.services.cloture import calculer_cloture, enregistrer_cloture
+from app.services.notifications import notifier
 
 router = APIRouter(prefix="/cloture", tags=["cloture"],
                    dependencies=[Depends(get_current_user)])
@@ -76,6 +77,14 @@ def cloturer(payload: ClotureIn, db: Session = Depends(get_db),
                 site_id=site_id, details={"jour": str(payload.jour),
                                           "ecart": float(cloture.ecart),
                                           "total": float(cloture.total_theorique)})
+    # Alerte si écart de caisse non nul (manque ou excédent).
+    ecart = float(cloture.ecart)
+    if abs(ecart) >= 0.01:
+        notifier(db, f"Écart de caisse : {ecart} DH",
+                 f"Clôture du {payload.jour} : écart de {ecart} DH "
+                 f"(théorique {cloture.total_theorique} DH).",
+                 severite="haute", site_id=site_id,
+                 ref_type="cloture", ref_id=cloture.id)
     return cloture
 
 

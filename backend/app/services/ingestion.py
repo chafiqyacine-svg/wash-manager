@@ -45,6 +45,7 @@ from app.models.enums import AnomalieSeverite, AnomalieType, ZoneCode
 from app.schemas.event import EventIn, EventType
 from app.services import classification as clf
 from app.services.anomalie import ContexteTransaction, detecter_anomalies
+from app.services.notifications import SEVERITES_ALERTE, notifier_anomalie
 from app.services.parametres import get_int
 from app.services.reconciliation import (
     InfoTransaction,
@@ -235,17 +236,23 @@ def finaliser_transaction(db: Session, txn: Transaction, ticket: Ticket | None) 
         duree_totale_min=duree_min,
         plaque_lue=txn.vehicule_id is not None,
     )
+    site_txn = _site_de_transaction(db, txn)
     for a in detecter_anomalies(ctx):
-        db.add(Anomalie(
+        anomalie = Anomalie(
             transaction_id=txn.id,
             type=a.type,
             severite=a.severite,
             description=a.description,
             photo=txn.photo_entree,
-        ))
-        # TODO(dev): pour severite CRITIQUE/HAUTE, déclencher l'alerte WhatsApp
-        #   (services.notification.envoyer_alerte_whatsapp) via une tâche de fond,
-        #   puis marquer Anomalie.notifie = True.
+        )
+        db.add(anomalie)
+        # Alerte temps réel pour les anomalies graves (haute/critique).
+        if a.severite in SEVERITES_ALERTE:
+            db.flush()
+            notifier_anomalie(db, type_=a.type, severite=a.severite,
+                              description=a.description, site_id=site_txn,
+                              anomalie_id=anomalie.id, commit=False)
+            anomalie.notifie = True
 
     # Consommation d'inventaire selon la recette du forfait effectué.
     _consommer_produits(db, txn, forfait_detecte)
@@ -308,6 +315,14 @@ def consommer_inventaire(db: Session, txn: Transaction) -> None:
     """Point d'entrée public : consomme l'inventaire d'un lavage clôturé
     (mode manuel via la file d'attente). Idempotent."""
     _consommer_produits(db, txn, None)
+
+
+def _site_de_transaction(db: Session, txn: Transaction) -> int | None:
+    """Site du lavage via sa baie (pour cibler l'alerte)."""
+    if txn.bay_id is None:
+        return None
+    bay = db.get(Bay, txn.bay_id)
+    return bay.site_id if bay else None
 
 
 def _hors_horaires_ouverture(db: Session, txn: Transaction) -> bool:

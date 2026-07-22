@@ -121,4 +121,19 @@ export default {
   "obj.add": "Ajouter un objectif",
   "obj.empty": "Aucun objectif défini.",
   "obj.missed_warning": "objectif(s) non atteint(s) ce jour.",
+
+  // Alertes / notifications
+  "nav.alertes": "Alertes",
+  "alr.title": "Alertes",
+  "alr.subtitle": "Notifications déclenchées (anomalies graves, écarts de caisse…).",
+  "alr.test": "Envoyer un test",
+  "alr.test_ok": "Alerte de test enregistrée.",
+  "alr.subject": "Objet",
+  "alr.channel": "Canal",
+  "alr.empty": "Aucune alerte.",
+  "alr.simule": "Mode simulé : les alertes sont enregistrées mais pas encore transmises (aucun canal configuré).",
+  "alr.reel": "Canaux actifs",
+  "alr.statut.envoye": "Envoyée",
+  "alr.statut.simule": "Simulée",
+  "alr.statut.echec": "Échec",
 };

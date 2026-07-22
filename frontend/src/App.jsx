@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Sidebar from "./components/Sidebar.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+import Alertes from "./pages/Alertes.jsx";
 import Anomalies from "./pages/Anomalies.jsx";
 import Audit from "./pages/Audit.jsx";
 import Bays from "./pages/Bays.jsx";
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="/cameras" element={<Cameras />} />
                 <Route path="/audit" element={<Audit />} />
                 <Route path="/objectifs" element={<Objectifs />} />
+                <Route path="/alertes" element={<Alertes />} />
                 <Route path="/bays" element={<Bays />} />
                 <Route path="/queue" element={<Queue />} />
                 <Route path="/payments" element={<Payments />} />

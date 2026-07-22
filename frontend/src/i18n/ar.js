@@ -120,4 +120,19 @@ export default {
   "obj.add": "إضافة هدف",
   "obj.empty": "لا توجد أهداف محدّدة.",
   "obj.missed_warning": "هدف (أهداف) غير محقّقة اليوم.",
+
+  // Alertes / notifications
+  "nav.alertes": "التنبيهات",
+  "alr.title": "التنبيهات",
+  "alr.subtitle": "الإشعارات المُطلقة (أعطال خطيرة، فوارق الصندوق…).",
+  "alr.test": "إرسال اختبار",
+  "alr.test_ok": "تم تسجيل تنبيه الاختبار.",
+  "alr.subject": "الموضوع",
+  "alr.channel": "القناة",
+  "alr.empty": "لا توجد تنبيهات.",
+  "alr.simule": "الوضع التجريبي: تُسجّل التنبيهات لكن لا تُرسل بعد (لا قناة مُهيّأة).",
+  "alr.reel": "القنوات النشطة",
+  "alr.statut.envoye": "مُرسَل",
+  "alr.statut.simule": "محاكاة",
+  "alr.statut.echec": "فشل",
 };

@@ -118,6 +118,8 @@ export const api = {
   marges: (siteId) => request(`/marges${siteId ? `?site_id=${siteId}` : ""}`),
   // Supervision des caméras (santé edge)
   cameras: (siteId) => request(`/cameras${siteId ? `?site_id=${siteId}` : ""}`),
+  // Journal d'audit (traçabilité des actions sensibles)
+  audit: (action) => request(`/audit${action ? `?action=${encodeURIComponent(action)}` : ""}`),
   // Caisse intégrée (tickets)
   tickets: (statut = "") => request(`/tickets${statut ? `?statut=${statut}` : ""}`),
   creerTicket: (payload) => request("/tickets", { method: "POST", body: payload }),

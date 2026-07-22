@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Forfait, ForfaitProduit, Ticket, Transaction
+from app.models import Forfait, ForfaitProduit, Ticket, Transaction, Utilisateur
 from app.schemas.common import ForfaitCreate, ForfaitOut, ForfaitUpdate
+from app.services.audit import journaliser
 
 router = APIRouter(prefix="/forfaits", tags=["forfaits"],
                    dependencies=[Depends(get_current_user)])
@@ -32,17 +33,22 @@ def creer_forfait(payload: ForfaitCreate, db: Session = Depends(get_db)) -> Forf
 
 @router.put("/{forfait_id}", response_model=ForfaitOut)
 def modifier_forfait(
-    forfait_id: int, payload: ForfaitUpdate, db: Session = Depends(get_db)
+    forfait_id: int, payload: ForfaitUpdate, db: Session = Depends(get_db),
+    user: Utilisateur = Depends(get_current_user),
 ) -> Forfait:
     """Ajuste prix, zones requises et seuils de temps d'un forfait."""
     forfait = db.get(Forfait, forfait_id)
     if forfait is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Forfait inconnu")
     data = payload.model_dump(exclude_none=True)
+    ancien_prix = float(forfait.prix)
     for champ, valeur in data.items():
         setattr(forfait, champ, valeur)
     db.commit()
     db.refresh(forfait)
+    journaliser(db, user, "forfait.modifier", cible="forfait", cible_id=forfait.id,
+                details={"champs": list(data.keys()), "ancien_prix": ancien_prix,
+                         "nouveau_prix": float(forfait.prix)})
     return forfait
 
 
@@ -75,7 +81,8 @@ def maj_consommation(forfait_id: int, items: list[ConsommationItem],
 
 
 @router.delete("/{forfait_id}", status_code=status.HTTP_204_NO_CONTENT)
-def supprimer_forfait(forfait_id: int, db: Session = Depends(get_db)) -> None:
+def supprimer_forfait(forfait_id: int, db: Session = Depends(get_db),
+                      user: Utilisateur = Depends(get_current_user)) -> None:
     """Supprime un forfait — refusé s'il est déjà référencé (préserve l'historique)."""
     forfait = db.get(Forfait, forfait_id)
     if forfait is None:
@@ -89,5 +96,8 @@ def supprimer_forfait(forfait_id: int, db: Session = Depends(get_db)) -> None:
             status.HTTP_409_CONFLICT,
             "Forfait utilisé par des transactions/tickets — suppression impossible.",
         )
+    nom = forfait.nom
     db.delete(forfait)
     db.commit()
+    journaliser(db, user, "forfait.supprimer", cible="forfait", cible_id=forfait_id,
+                details={"nom": nom})

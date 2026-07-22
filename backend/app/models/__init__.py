@@ -1,5 +1,6 @@
 """Modèles ORM. L'import ici garantit qu'Alembic/Base les découvre tous."""
 from app.models.anomalie import Anomalie
+from app.models.audit import JournalAudit
 from app.models.bay import Bay
 from app.models.camera import Camera
 from app.models.cloture import ClotureCaisse
@@ -30,6 +31,7 @@ __all__ = [
     "Anomalie",
     "Bay",
     "Camera",
+    "JournalAudit",
     "ClotureCaisse",
     "Employe",
     "EvenementTraite",

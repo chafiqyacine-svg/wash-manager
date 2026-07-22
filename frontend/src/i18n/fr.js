@@ -17,6 +17,7 @@ export default {
   "nav.anomalies": "Anomalies",
   "nav.history": "Historique",
   "nav.reports": "Rapports",
+  "nav.audit": "Journal d'audit",
   "nav.users": "Utilisateurs",
   "nav.settings": "Réglages",
   "nav.menu": "Menu",
@@ -95,4 +96,14 @@ export default {
   "cam.offline_warning": "caméra(s) hors ligne — surveillance interrompue.",
   "cam.empty": "Aucune caméra connue (aucun heartbeat reçu).",
   "cam.hint": "Une caméra est « hors ligne » si aucun signal n'a été reçu depuis ~90 s.",
+
+  // Journal d'audit
+  "audit.title": "Journal d'audit",
+  "audit.subtitle": "Traçabilité des actions sensibles : qui a fait quoi, quand.",
+  "audit.all_actions": "Toutes les actions",
+  "audit.when": "Date",
+  "audit.who": "Utilisateur",
+  "audit.action": "Action",
+  "audit.detail": "Détail",
+  "audit.empty": "Aucune action journalisée.",
 };

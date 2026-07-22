@@ -12,6 +12,7 @@ from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
 from app.models import Forfait, Ticket, Transaction, Utilisateur
 from app.schemas.ticket import TicketCreate, TicketOut
+from app.services.audit import journaliser
 from app.services.ingestion import finaliser_transaction
 
 router = APIRouter(prefix="/tickets", tags=["caisse"],
@@ -52,20 +53,27 @@ def lister_tickets(db: Session = Depends(get_db), statut: str | None = None):
 
 
 @router.post("/{ticket_id}/annuler", response_model=TicketOut)
-def annuler_ticket(ticket_id: int, db: Session = Depends(get_db)) -> Ticket:
+def annuler_ticket(ticket_id: int, db: Session = Depends(get_db),
+                   user: Utilisateur = Depends(get_current_user)) -> Ticket:
     ticket = db.get(Ticket, ticket_id)
     if ticket is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Ticket inconnu")
     ticket.statut = "annule"
     db.commit()
     db.refresh(ticket)
+    # Audit : l'annulation d'un ticket encaissé est une action à risque.
+    journaliser(db, user, "ticket.annuler", cible="ticket", cible_id=ticket.id,
+                site_id=ticket.site_id,
+                details={"forfait_id": ticket.forfait_id, "prix": float(ticket.prix),
+                         "mode_paiement": ticket.mode_paiement})
     live_manager.notifier({"type": "update", "source": "ticket"})
     return ticket
 
 
 @router.post("/{ticket_id}/rapprocher", response_model=TicketOut)
 def rapprocher_manuellement(
-    ticket_id: int, transaction_id: int, db: Session = Depends(get_db)
+    ticket_id: int, transaction_id: int, db: Session = Depends(get_db),
+    user: Utilisateur = Depends(get_current_user),
 ) -> Ticket:
     """Associe manuellement un ticket ouvert à une transaction et recalcule
     conformité + anomalies (utile pour les cas ambigus non appariés auto).
@@ -82,5 +90,7 @@ def rapprocher_manuellement(
     finaliser_transaction(db, txn, ticket)
     db.commit()
     db.refresh(ticket)
+    journaliser(db, user, "ticket.rapprocher", cible="ticket", cible_id=ticket.id,
+                site_id=ticket.site_id, details={"transaction_id": transaction_id})
     live_manager.notifier({"type": "update", "source": "ticket"})
     return ticket

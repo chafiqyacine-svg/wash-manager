@@ -12,6 +12,7 @@ from app.api.deps import get_current_user, require_role, resolve_site
 from app.core.config import settings
 from app.core.database import get_db
 from app.models import ClotureCaisse, Utilisateur
+from app.services.audit import journaliser
 from app.services.cloture import calculer_cloture, enregistrer_cloture
 
 router = APIRouter(prefix="/cloture", tags=["cloture"],
@@ -66,11 +67,16 @@ def cloturer(payload: ClotureIn, db: Session = Depends(get_db),
     apercu_data = calculer_cloture(db, payload.jour, site_id)
     if apercu_data["deja_cloturee"]:
         raise HTTPException(status.HTTP_409_CONFLICT, "Caisse déjà clôturée pour ce jour/site")
-    return enregistrer_cloture(
+    cloture = enregistrer_cloture(
         db, payload.jour, site_id,
         montant_compte=payload.montant_compte, fond_caisse=payload.fond_caisse,
         notes=payload.notes, user_id=user.id,
     )
+    journaliser(db, user, "cloture.creer", cible="cloture", cible_id=cloture.id,
+                site_id=site_id, details={"jour": str(payload.jour),
+                                          "ecart": float(cloture.ecart),
+                                          "total": float(cloture.total_theorique)})
+    return cloture
 
 
 @router.get("/{cloture_id}/pdf")

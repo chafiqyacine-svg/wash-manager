@@ -1,13 +1,14 @@
 """Consultation et résolution des anomalies (avec emplacement)."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, resolve_site
 from app.api.routes.live import manager as live_manager
 from app.core.database import get_db
-from app.models import Anomalie, Bay, Employe, Site, Transaction
+from app.models import Anomalie, Bay, Employe, Site, Transaction, Utilisateur
 from app.schemas.common import AnomalieOut
+from app.services.audit import journaliser
 
 router = APIRouter(prefix="/anomalies", tags=["anomalies"],
                    dependencies=[Depends(get_current_user)])
@@ -59,9 +60,15 @@ def lister_anomalies(db: Session = Depends(get_db), resolu: bool | None = None,
 
 
 @router.post("/{anomalie_id}/resoudre", response_model=AnomalieOut)
-def resoudre_anomalie(anomalie_id: int, db: Session = Depends(get_db)):
+def resoudre_anomalie(anomalie_id: int, db: Session = Depends(get_db),
+                      user: Utilisateur = Depends(get_current_user)):
     anomalie = db.get(Anomalie, anomalie_id)
+    if anomalie is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Anomalie inconnue")
     anomalie.resolu = True
     db.commit()
+    s_id, _, _ = _emplacement(db, anomalie)
+    journaliser(db, user, "anomalie.resoudre", cible="anomalie", cible_id=anomalie.id,
+                site_id=s_id, details={"type": anomalie.type})
     live_manager.notifier({"type": "update", "source": "anomalie"})
     return anomalie

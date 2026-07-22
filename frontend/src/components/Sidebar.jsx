@@ -49,8 +49,9 @@ function Item({ to, label, icon }) {
 }
 
 export default function Sidebar() {
-  const { logout, isAdmin } = useAuth();
+  const { logout, isAdmin, user } = useAuth();
   const { t } = useI18n();
+  const estControleur = isAdmin || user?.role === "manager";
   return (
     <aside className="w-64 bg-white border-r border-slate-100 flex flex-col p-4">
       <div className="flex items-center justify-between px-2 mb-6">
@@ -64,6 +65,7 @@ export default function Sidebar() {
       <div className="text-xs text-slate-400 px-3 mb-1">{t("nav.menu")}</div>
       <nav className="space-y-1">
         {MENU.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
+        {estControleur && <Item to="/audit" icon="📋" label={t("nav.audit")} />}
         {isAdmin && ADMIN.map((m) => <Item key={m.to} to={m.to} icon={m.icon} label={t(m.key)} />)}
       </nav>
 

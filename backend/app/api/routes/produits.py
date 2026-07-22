@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, resolve_site
 from app.core.database import get_db
-from app.models import Produit
+from app.models import Produit, Utilisateur
+from app.services.audit import journaliser
 
 router = APIRouter(prefix="/produits", tags=["inventaire"],
                    dependencies=[Depends(get_current_user)])
@@ -76,7 +77,8 @@ def modifier(produit_id: int, payload: ProduitUpdate, db: Session = Depends(get_
 
 
 @router.post("/{produit_id}/mouvement", response_model=ProduitOut)
-def mouvement(produit_id: int, delta: float, db: Session = Depends(get_db)) -> Produit:
+def mouvement(produit_id: int, delta: float, db: Session = Depends(get_db),
+              user: Utilisateur = Depends(get_current_user)) -> Produit:
     """Entrée (+) ou sortie (-) de stock. La quantité ne descend pas sous 0."""
     produit = db.get(Produit, produit_id)
     if produit is None:
@@ -84,14 +86,20 @@ def mouvement(produit_id: int, delta: float, db: Session = Depends(get_db)) -> P
     produit.quantite = max(0, float(produit.quantite) + delta)
     db.commit()
     db.refresh(produit)
-    # TODO(dev): journaliser le mouvement (table mouvements_stock) + alerte si bas.
+    journaliser(db, user, "stock.mouvement", cible="produit", cible_id=produit.id,
+                site_id=produit.site_id,
+                details={"produit": produit.nom, "delta": delta,
+                         "nouvelle_quantite": float(produit.quantite)})
     return produit
 
 
 @router.delete("/{produit_id}", status_code=status.HTTP_204_NO_CONTENT)
-def supprimer(produit_id: int, db: Session = Depends(get_db)) -> None:
+def supprimer(produit_id: int, db: Session = Depends(get_db),
+              user: Utilisateur = Depends(get_current_user)) -> None:
     produit = db.get(Produit, produit_id)
     if produit is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Produit inconnu")
     produit.actif = False  # suppression logique (préserve l'historique)
     db.commit()
+    journaliser(db, user, "produit.supprimer", cible="produit", cible_id=produit.id,
+                site_id=produit.site_id, details={"nom": produit.nom})

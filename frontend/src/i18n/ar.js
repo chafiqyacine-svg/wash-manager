@@ -16,6 +16,7 @@ export default {
   "nav.anomalies": "الأعطال",
   "nav.history": "السجل",
   "nav.reports": "التقارير",
+  "nav.audit": "سجل التدقيق",
   "nav.users": "المستخدمون",
   "nav.settings": "الإعدادات",
   "nav.menu": "القائمة",
@@ -94,4 +95,14 @@ export default {
   "cam.offline_warning": "كاميرا (كاميرات) غير متصلة — المراقبة متوقفة.",
   "cam.empty": "لا توجد كاميرات معروفة (لم يُستقبل أي إشارة).",
   "cam.hint": "تُعتبر الكاميرا « غير متصلة » إذا لم تُستقبل أي إشارة منذ ~90 ثانية.",
+
+  // Journal d'audit
+  "audit.title": "سجل التدقيق",
+  "audit.subtitle": "تتبّع الإجراءات الحساسة: من فعل ماذا ومتى.",
+  "audit.all_actions": "كل الإجراءات",
+  "audit.when": "التاريخ",
+  "audit.who": "المستخدم",
+  "audit.action": "الإجراء",
+  "audit.detail": "التفاصيل",
+  "audit.empty": "لا توجد إجراءات مسجّلة.",
 };

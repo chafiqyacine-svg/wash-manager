@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
     anomalies,
+    audit,
     auth,
     bays,
     cameras,
@@ -83,6 +84,7 @@ app.include_router(forfaits.router, prefix=API_PREFIX)
 app.include_router(marges.router, prefix=API_PREFIX)
 app.include_router(parametres.router, prefix=API_PREFIX)
 app.include_router(anomalies.router, prefix=API_PREFIX)
+app.include_router(audit.router, prefix=API_PREFIX)
 app.include_router(rapports.router, prefix=API_PREFIX)
 app.include_router(live.router, prefix=API_PREFIX)
 

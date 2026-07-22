@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.alertes import scanner_absences
 from app.services.maintenance import nettoyer_transactions_orphelines
+from app.services.notifications import envoyer_notifications_en_attente
 from app.services.rapport import generer_rapport_journalier
 
 
@@ -41,6 +42,15 @@ def _job_nettoyage_orphelines() -> None:
         db.close()
 
 
+def _job_envoi_alertes() -> None:
+    """Transmet les alertes en attente (SMTP/WhatsApp) hors du chemin des requêtes."""
+    db = SessionLocal()
+    try:
+        envoyer_notifications_en_attente(db)
+    finally:
+        db.close()
+
+
 def demarrer_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="Africa/Casablanca")
     scheduler.add_job(
@@ -61,6 +71,13 @@ def demarrer_scheduler() -> BackgroundScheduler:
         _job_nettoyage_orphelines,
         IntervalTrigger(hours=1),
         id="nettoyage_orphelines",
+        replace_existing=True,
+    )
+    # Toutes les 20 s : envoi des alertes en attente (hors chemin des requêtes).
+    scheduler.add_job(
+        _job_envoi_alertes,
+        IntervalTrigger(seconds=settings.alert_dispatch_interval_s),
+        id="envoi_alertes",
         replace_existing=True,
     )
     scheduler.start()

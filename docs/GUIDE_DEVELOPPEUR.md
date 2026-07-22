@@ -235,8 +235,11 @@ Points d'intégration notables :
 - **Alertes** : `notifier_anomalie` est appelé dans `ingestion.finaliser_transaction`
   pour toute anomalie *haute/critique* ; `notifier` dans la route clôture si écart.
   Les canaux réels (SMTP, API WhatsApp) sont dans `services/notifications.py`
-  (gated par la config ; statut « simulé » si non configuré). TODO(dev) : envoi en
-  tâche de fond pour ne pas bloquer la requête.
+  (gated par la config ; statut « simulé » si non configuré). L'envoi est **différé**
+  hors du chemin des requêtes : `notifier()` enregistre l'alerte en « en_attente »,
+  et un job du scheduler (`envoyer_notifications_en_attente`, toutes les
+  `alert_dispatch_interval_s`) la transmet puis met à jour son statut
+  (envoye/echec). TODO(dev) : compteur de tentatives + backoff pour re-tenter.
 - **Audit** : `journaliser(db, user, action, …)` instrumente les routes sensibles
   (annulation/rapprochement ticket, prix forfait, résolution anomalie, clôture,
   mouvement/suppression de stock).

@@ -61,23 +61,32 @@ def test_ecart_caisse_declenche_alerte(client, db, ref):
     assert len(alertes) == 1 and "Écart" in alertes[0].sujet
 
 
-def test_canal_configure_marque_envoye(db, ref, monkeypatch):
-    """Quand un canal est configuré et l'envoi réussit, statut = envoye."""
+def test_canal_configure_differe_puis_envoye(db, ref, monkeypatch):
+    """Canal configuré : l'alerte est d'abord « en_attente » (non bloquant), puis
+    « envoye » une fois traitée en tâche de fond."""
     import app.services.notifications as N
     monkeypatch.setattr(N, "_canaux_configures", lambda: ["email"])
     monkeypatch.setattr(N, "_destinataires", lambda canal: ["boss@station.ma"])
     monkeypatch.setitem(N._EXPEDITEURS, "email", lambda d, s, m: True)
     (entree,) = N.notifier(db, "Sujet", "Message")
-    assert entree.statut == "envoye"
+    assert entree.statut == "en_attente"           # pas d'envoi dans la requête
     assert entree.canal == "email" and entree.destinataire == "boss@station.ma"
 
+    envoyes = N.envoyer_notifications_en_attente(db)  # tâche de fond
+    assert envoyes == 1
+    db.refresh(entree)
+    assert entree.statut == "envoye"
 
-def test_canal_configure_echec_marque_echec(db, ref, monkeypatch):
+
+def test_envoi_en_attente_echec_marque_echec(db, ref, monkeypatch):
     import app.services.notifications as N
     monkeypatch.setattr(N, "_canaux_configures", lambda: ["whatsapp"])
     monkeypatch.setattr(N, "_destinataires", lambda canal: ["+2126..."])
     monkeypatch.setitem(N._EXPEDITEURS, "whatsapp", lambda d, s, m: False)
     (entree,) = N.notifier(db, "S", "M")
+    assert entree.statut == "en_attente"
+    N.envoyer_notifications_en_attente(db)
+    db.refresh(entree)
     assert entree.statut == "echec"
 
 

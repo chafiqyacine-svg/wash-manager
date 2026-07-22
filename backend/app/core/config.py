@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "wash-manager@example.com"
     alert_emails: str = ""              # destinataires email, séparés par virgule
+    alert_dispatch_interval_s: int = 20  # fréquence d'envoi des alertes en attente
     report_daily_hour: int = 21
 
     @property

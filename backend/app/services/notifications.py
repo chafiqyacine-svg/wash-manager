@@ -81,21 +81,19 @@ def _destinataires(canal: str) -> list[str]:
 def notifier(db: Session, sujet: str, message: str, *, severite: str | None = None,
              site_id: int | None = None, ref_type: str | None = None,
              ref_id: int | None = None, commit: bool = True) -> list[Notification]:
-    """Envoie une alerte sur tous les canaux configurés et la journalise.
+    """Journalise une alerte (rapide) sans bloquer sur le réseau.
 
-    Sans canal configuré, une entrée « simule » (canal=log) est tout de même
-    créée : rien n'est perdu, le gérant voit l'alerte dans l'historique.
+    L'envoi réel (SMTP/WhatsApp) est différé : les entrées « en_attente » sont
+    transmises en tâche de fond par `envoyer_notifications_en_attente` (job du
+    scheduler). Sans canal configuré, l'entrée reste « simule » (canal=log) :
+    rien n'est perdu, le gérant la voit dans l'historique.
     """
     canaux = _canaux_configures()
     entrees: list[Notification] = []
 
     cibles = [(c, d) for c in canaux for d in _destinataires(c)] or [("log", None)]
     for canal, destinataire in cibles:
-        if canal == "log":
-            statut = "simule"
-        else:
-            ok = _EXPEDITEURS[canal](destinataire, sujet, message)
-            statut = "envoye" if ok else "echec"
+        statut = "simule" if canal == "log" else "en_attente"
         entree = Notification(
             canal=canal, destinataire=destinataire, sujet=sujet, message=message,
             severite=severite, statut=statut, site_id=site_id,
@@ -107,6 +105,29 @@ def notifier(db: Session, sujet: str, message: str, *, severite: str | None = No
     if commit:
         db.commit()
     return entrees
+
+
+def envoyer_notifications_en_attente(db: Session, limite: int = 50) -> int:
+    """Transmet les alertes en attente sur leur canal (appelé en tâche de fond).
+
+    Traité par un seul worker (le scheduler) → pas de double envoi. Renvoie le
+    nombre d'alertes envoyées avec succès.
+    """
+    from sqlalchemy import select
+
+    en_attente = db.scalars(
+        select(Notification).where(Notification.statut == "en_attente")
+        .order_by(Notification.id).limit(limite)
+    ).all()
+    envoyes = 0
+    for n in en_attente:
+        expediteur = _EXPEDITEURS.get(n.canal)
+        ok = bool(expediteur and expediteur(n.destinataire, n.sujet, n.message))
+        n.statut = "envoye" if ok else "echec"
+        envoyes += int(ok)
+        # TODO(dev): compteur de tentatives + backoff pour re-tenter les échecs.
+    db.commit()
+    return envoyes
 
 
 def notifier_anomalie(db: Session, *, type_: str, severite: str, description: str | None,
